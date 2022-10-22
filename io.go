@@ -25,7 +25,7 @@ func closeDB(db *bbolt.DB) error {
 	return db.Close()
 }
 
-func remove(db *bbolt.DB) error {
+func removeFile(db *bbolt.DB) error {
 	if db == nil {
 		return fmt.Errorf("db is nil")
 	}

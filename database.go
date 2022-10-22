@@ -40,8 +40,8 @@ type DB interface {
 	BucketsAt(path []string, mustExist bool, buffer chan []byte) error
 	// Close closes the database.
 	Close() error
-	// Remove deletes the database.
-	Remove() error
+	// RemoveFile deletes the database.
+	RemoveFile() error
 	// Size returns the Size struct for the database, used to get the file size of the db.
 	Size() Size
 	// Path returns the path of the open database file.
@@ -118,8 +118,8 @@ func (d dbFile) Close() error {
 	return closeDB(d.db)
 }
 
-func (d dbFile) Remove() error {
-	return remove(d.db)
+func (d dbFile) RemoveFile() error {
+	return removeFile(d.db)
 }
 
 func (d dbFile) Size() Size {
