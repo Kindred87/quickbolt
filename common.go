@@ -1,5 +1,8 @@
 package quickbolt
 
+import "time"
+
 const (
-	rootBucket = "root"
+	rootBucket           = "root"
+	defaultBufferTimeout = time.Second * 1
 )

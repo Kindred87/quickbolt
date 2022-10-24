@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/rs/zerolog"
 	"go.etcd.io/bbolt"
@@ -56,7 +57,11 @@ type DB interface {
 	// buffer related errors via zerolog.
 	//
 	// The default log output is os.Stdout.
-	AddLog(w io.Writer)
+	AddLog(io.Writer)
+	// SetBufferTimeout sets the timeout for buffer operations.
+	//
+	// The default is 1 second.
+	SetBufferTimeout(time.Duration)
 }
 
 // Create generates a database with the given filename and returns a DB
@@ -76,75 +81,76 @@ func Create(filename string) (DB, error) {
 		return nil, fmt.Errorf("error while opening db at %s: %w", filename, err)
 	}
 
-	db := dbFile{db: d}
+	db := dbWrapper{db: d, bufferTimeout: defaultBufferTimeout}
 	db.logger = zerolog.New(os.Stdout)
 
 	return &db, nil
 }
 
-// dbFile is an encapsulation of a BBolt DB that implements the DB interface.
-type dbFile struct {
-	db     *bbolt.DB
-	logger zerolog.Logger
+// dbWrapper is an encapsulation of a BBolt DB that implements the DB interface.
+type dbWrapper struct {
+	db            *bbolt.DB
+	logger        zerolog.Logger
+	bufferTimeout time.Duration
 }
 
-func (d dbFile) Upsert(key []byte, val []byte, path []string, addFunc func(a, b []byte) ([]byte, error)) error {
+func (d dbWrapper) Upsert(key []byte, val []byte, path []string, addFunc func(a, b []byte) ([]byte, error)) error {
 	return upsert(d.db, key, val, path, addFunc)
 }
 
-func (d dbFile) Insert(key, value []byte, path []string) error {
+func (d dbWrapper) Insert(key, value []byte, path []string) error {
 	return insert(d.db, key, value, path)
 }
 
-func (d dbFile) Delete(key []byte, path []string) error {
+func (d dbWrapper) Delete(key []byte, path []string) error {
 	return delete(d.db, key, path)
 }
 
-func (d dbFile) DeleteValues(value []byte, path []string) error {
+func (d dbWrapper) DeleteValues(value []byte, path []string) error {
 	return deleteValues(d.db, value, path)
 }
 
-func (d dbFile) GetValue(key []byte, path []string, mustExist bool) ([]byte, error) {
+func (d dbWrapper) GetValue(key []byte, path []string, mustExist bool) ([]byte, error) {
 	return getValue(d.db, key, path, mustExist)
 }
 
-func (d dbFile) GetFirstKeyAt(path []string, mustExist bool) ([]byte, error) {
+func (d dbWrapper) GetFirstKeyAt(path []string, mustExist bool) ([]byte, error) {
 	return getFirstKeyAt(d.db, path, mustExist)
 }
 
-func (d dbFile) ValuesAt(path []string, mustExist bool) ([][]byte, error) {
+func (d dbWrapper) ValuesAt(path []string, mustExist bool) ([][]byte, error) {
 	return valuesAt(d.db, path, mustExist)
 }
 
-func (d dbFile) KeysAt(path []string, mustExist bool, buffer chan []byte) error {
-	return keysAt(d.db, path, mustExist, buffer, d.logger)
+func (d dbWrapper) KeysAt(path []string, mustExist bool, buffer chan []byte) error {
+	return keysAt(d.db, path, mustExist, buffer, d)
 }
 
-func (d dbFile) EntriesAt(path []string, mustExist bool, buffer chan [2][]byte) error {
-	return entriesAt(d.db, path, mustExist, buffer, d.logger)
+func (d dbWrapper) EntriesAt(path []string, mustExist bool, buffer chan [2][]byte) error {
+	return entriesAt(d.db, path, mustExist, buffer, d)
 }
 
-func (d dbFile) BucketsAt(path []string, mustExist bool, buffer chan []byte) error {
-	return bucketsAt(d.db, path, mustExist, buffer, d.logger)
+func (d dbWrapper) BucketsAt(path []string, mustExist bool, buffer chan []byte) error {
+	return bucketsAt(d.db, path, mustExist, buffer, d)
 }
 
-func (d dbFile) RunView(f func(tx *bbolt.Tx) error) error {
+func (d dbWrapper) RunView(f func(tx *bbolt.Tx) error) error {
 	return d.db.View(f)
 }
 
-func (d dbFile) RunUpdate(f func(tx *bbolt.Tx) error) error {
+func (d dbWrapper) RunUpdate(f func(tx *bbolt.Tx) error) error {
 	return d.db.Update(f)
 }
 
-func (d dbFile) Close() error {
+func (d dbWrapper) Close() error {
 	return closeDB(d.db)
 }
 
-func (d dbFile) RemoveFile() error {
+func (d dbWrapper) RemoveFile() error {
 	return removeFile(d.db)
 }
 
-func (d dbFile) Size() Size {
+func (d dbWrapper) Size() Size {
 	if d.db == nil {
 		return sizeStore{}
 	}
@@ -156,10 +162,14 @@ func (d dbFile) Size() Size {
 	return newSizeStore(int(stats.Size() / 1048576))
 }
 
-func (d dbFile) Path() string {
+func (d dbWrapper) Path() string {
 	return d.db.Path()
 }
 
-func (d *dbFile) AddLog(w io.Writer) {
+func (d *dbWrapper) AddLog(w io.Writer) {
 	d.logger = zerolog.New(w)
+}
+
+func (d *dbWrapper) SetBufferTimeout(t time.Duration) {
+	d.bufferTimeout = t
 }

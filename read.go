@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rs/zerolog"
 	"go.etcd.io/bbolt"
 )
 
@@ -119,7 +118,7 @@ func valuesAt(db *bbolt.DB, path []string, mustExist bool) ([][]byte, error) {
 	return values, nil
 }
 
-func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, logger zerolog.Logger) error {
+func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
 	defer close(buffer)
 
 	err := db.View(func(tx *bbolt.Tx) error {
@@ -133,9 +132,9 @@ func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, log
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
 			select {
 			case buffer <- k:
-			case <-time.After(time.Second * 5):
+			case <-time.After(dbWrap.bufferTimeout):
 				err := fmt.Errorf("quickbolt key scanning timed out while waiting to send to buffer")
-				logger.Err(err).Msg("")
+				dbWrap.logger.Err(err).Msg("")
 				return err
 			}
 		}
@@ -148,7 +147,7 @@ func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, log
 	return nil
 }
 
-func entriesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan [2][]byte, logger zerolog.Logger) error {
+func entriesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan [2][]byte, dbWrap dbWrapper) error {
 	defer close(buffer)
 
 	err := db.View(func(tx *bbolt.Tx) error {
@@ -162,9 +161,9 @@ func entriesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan [2][]byt
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			select {
 			case buffer <- [2][]byte{k, v}:
-			case <-time.After(time.Second * 5):
+			case <-time.After(dbWrap.bufferTimeout):
 				err := fmt.Errorf("quickbolt key scanning timed out while waiting to send to buffer")
-				logger.Err(err).Msg("")
+				dbWrap.logger.Err(err).Msg("")
 				return err
 			}
 		}
@@ -177,7 +176,7 @@ func entriesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan [2][]byt
 	return nil
 }
 
-func bucketsAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, logger zerolog.Logger) error {
+func bucketsAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
 	defer close(buffer)
 
 	err := db.View(func(tx *bbolt.Tx) error {
@@ -194,9 +193,9 @@ func bucketsAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, 
 			}
 			select {
 			case buffer <- k:
-			case <-time.After(time.Second * 5):
+			case <-time.After(dbWrap.bufferTimeout):
 				err := fmt.Errorf("quickbolt key scanning timed out while waiting to send to buffer")
-				logger.Err(err).Msg("")
+				dbWrap.logger.Err(err).Msg("")
 				return err
 			}
 		}
