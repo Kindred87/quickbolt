@@ -40,9 +40,9 @@ type DB interface {
 	EntriesAt(path []string, mustExist bool, buffer chan [2][]byte) error
 	// BucketsAt returns the buckets at the given path.
 	BucketsAt(path []string, mustExist bool, buffer chan []byte) error
-	// RunView executes a custom view func on the underlying store.
+	// RunView executes a custom view func on the database.
 	RunView(func(tx *bbolt.Tx) error) error
-	// RunUpdate executes a custom update func on the underlying store.
+	// RunUpdate executes a custom update func on the database.
 	RunUpdate(func(tx *bbolt.Tx) error) error
 	// Close closes the database.
 	Close() error
@@ -50,7 +50,7 @@ type DB interface {
 	RemoveFile() error
 	// Size returns the Size struct for the database, used to get the file size of the db.
 	Size() Size
-	// Path returns the path of the open database file.
+	// Path returns the path of the database file.
 	Path() string
 	// AddLog provides a writer interface through which quickbolt will log
 	// buffer related errors via zerolog.
