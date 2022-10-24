@@ -170,6 +170,10 @@ func entriesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan [2][]byt
 		c := bkt.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
+			if v == nil {
+				continue
+			}
+
 			select {
 			case buffer <- [2][]byte{k, v}:
 			case <-time.After(dbWrap.bufferTimeout):
