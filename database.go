@@ -14,8 +14,12 @@ import (
 type DB interface {
 	// Upsert adds the key-value pair to the db at the given path.  If the key is already present in the
 	// db, then the sum of the existing and given values via add() will be inserted instead.
+	//
+	// Buckets in the path are created if they do not already exist.
 	Upsert(key []byte, val []byte, bucketPath []string, add func(a, b []byte) ([]byte, error)) error
 	// Insert adds the given key-value pair to the db at the given path.
+	//
+	// Buckets in the path are created if they do not already exist.
 	Insert(key, value []byte, bucketPath []string) error
 	// Delete removes the key-value pair in the db at the given path.
 	Delete(key []byte, bucketPath []string) error
