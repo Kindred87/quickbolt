@@ -89,9 +89,9 @@ func getFirstKeyAt(db *bbolt.DB, path []string, mustExist bool) ([]byte, error) 
 	return key, nil
 }
 
-func valuesAt(db *bbolt.DB, path []string, mustExist bool) ([][]byte, error) {
+func valuesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
 	if db == nil {
-		return nil, fmt.Errorf("db is nil")
+		return fmt.Errorf("db is nil")
 	}
 
 	var values [][]byte
@@ -105,6 +105,13 @@ func valuesAt(db *bbolt.DB, path []string, mustExist bool) ([][]byte, error) {
 		c := bkt.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
+			select {
+			case buffer <- k:
+			case <-time.After(dbWrap.bufferTimeout):
+				err := fmt.Errorf("quickbolt value retrieval timed out while waiting to send to buffer")
+				dbWrap.logger.Err(err).Msg("")
+				return err
+			}
 			values = append(values, v)
 		}
 
@@ -112,10 +119,10 @@ func valuesAt(db *bbolt.DB, path []string, mustExist bool) ([][]byte, error) {
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("error while scanning db: %w", err)
+		return fmt.Errorf("error while scanning db: %w", err)
 	}
 
-	return values, nil
+	return nil
 }
 
 func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
@@ -137,7 +144,7 @@ func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbW
 			select {
 			case buffer <- k:
 			case <-time.After(dbWrap.bufferTimeout):
-				err := fmt.Errorf("quickbolt key scanning timed out while waiting to send to buffer")
+				err := fmt.Errorf("quickbolt key retrieval timed out while waiting to send to buffer")
 				dbWrap.logger.Err(err).Msg("")
 				return err
 			}

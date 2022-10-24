@@ -38,7 +38,7 @@ type DB interface {
 	// be found.
 	GetFirstKeyAt(bucketPath []string, mustExist bool) ([]byte, error)
 	// ValuesAt returns the values for all the keys at the given path.
-	ValuesAt(bucketPath []string, mustExist bool) ([][]byte, error)
+	ValuesAt(bucketPath []string, mustExist bool, buffer chan []byte) error
 	// KeysAt returns the keys at the given path.
 	KeysAt(bucketPath []string, mustExist bool, buffer chan []byte) error
 	// EntriesAt returns the key-value pairs at the given path.
@@ -128,8 +128,8 @@ func (d dbWrapper) GetFirstKeyAt(path []string, mustExist bool) ([]byte, error) 
 	return getFirstKeyAt(d.db, path, mustExist)
 }
 
-func (d dbWrapper) ValuesAt(path []string, mustExist bool) ([][]byte, error) {
-	return valuesAt(d.db, path, mustExist)
+func (d dbWrapper) ValuesAt(path []string, mustExist bool, buffer chan []byte) error {
+	return valuesAt(d.db, path, mustExist, buffer, d)
 }
 
 func (d dbWrapper) KeysAt(path []string, mustExist bool, buffer chan []byte) error {
