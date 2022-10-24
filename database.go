@@ -86,12 +86,12 @@ func Create(filename string, dir ...string) (DB, error) {
 	var dbPath string
 
 	if dir == nil {
-		dir, err := execDir()
+		exec, err := execDir()
 		if err != nil {
 			return nil, fmt.Errorf("error while getting executable dir: %w", err)
 		}
 
-		dbPath = filepath.Join(dir, filename)
+		dbPath = filepath.Join(exec, filename)
 	} else if len(dir) >= 0 && filepath.Ext(dir[0]) != "" {
 		dbPath = filepath.Dir(dir[0])
 	} else if len(dir) >= 0 {
