@@ -76,13 +76,27 @@ type DB interface {
 
 // Create generates a database with the given filename and returns a DB
 // interface encapsulating the database.
-func Create(filename string) (DB, error) {
-	dir, err := execDir()
-	if err != nil {
-		return nil, fmt.Errorf("error while getting executable dir: %w", err)
-	}
+//
+// If the dir parameter is provided, the database will be created there.
+// Otherwise, the database will be created in the executable's directory.
+//
+// If the database file already exists, it will be deleted and replaced
+// with a new one.
+func Create(filename string, dir ...string) (DB, error) {
+	var dbPath string
 
-	dbPath := filepath.Join(dir, filename)
+	if dir == nil {
+		dir, err := execDir()
+		if err != nil {
+			return nil, fmt.Errorf("error while getting executable dir: %w", err)
+		}
+
+		dbPath = filepath.Join(dir, filename)
+	} else if len(dir) >= 0 && filepath.Ext(dir[0]) != "" {
+		dbPath = filepath.Dir(dir[0])
+	} else if len(dir) >= 0 {
+		dbPath = dir[0]
+	}
 
 	os.Remove(dbPath)
 
