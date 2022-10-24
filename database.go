@@ -14,36 +14,40 @@ import (
 type DB interface {
 	// Upsert adds the key-value pair to the db at the given path.  If the key is already present in the
 	// db, then the sum of the existing and given values will be added to the db instead.
-	Upsert(key []byte, val []byte, path []string, addFunc func(a, b []byte) ([]byte, error)) error
+	Upsert(key []byte, val []byte, bucketPath []string, addFunc func(a, b []byte) ([]byte, error)) error
 	// Insert adds the given key-value pair to the db at the given path.
-	Insert(key, value []byte, path []string) error
+	Insert(key, value []byte, bucketPath []string) error
 	// Delete removes the key-value pair in the db at the given path.
-	Delete(key []byte, path []string) error
+	Delete(key []byte, bucketPath []string) error
 	// DeleteValues removes all key-value pairs in the db at the given path where the value
 	// matches the one given.
-	DeleteValues(value []byte, path []string) error
+	DeleteValues(value []byte, bucketPath []string) error
 	// getValue returns the value paired with the given key.  The returned value will be nil
 	// if the key could not be found.
 	//
 	// If mustExist is true, an error will be returned if the key could not
 	// be found.
-	GetValue(key []byte, path []string, mustExist bool) ([]byte, error)
+	GetValue(key []byte, bucketPath []string, mustExist bool) ([]byte, error)
 	// getFirstKeyAt returns the first key at the given path.
 	//
 	// If mustExist is true, an error will be returned if the key could not
 	// be found.
-	GetFirstKeyAt(path []string, mustExist bool) ([]byte, error)
+	GetFirstKeyAt(bucketPath []string, mustExist bool) ([]byte, error)
 	// ValuesAt returns the values for all the keys at the given path.
-	ValuesAt(path []string, mustExist bool) ([][]byte, error)
+	ValuesAt(bucketPath []string, mustExist bool) ([][]byte, error)
 	// KeysAt returns the keys at the given path.
-	KeysAt(path []string, mustExist bool, buffer chan []byte) error
+	KeysAt(bucketPath []string, mustExist bool, buffer chan []byte) error
 	// EntriesAt returns the key-value pairs at the given path.
-	EntriesAt(path []string, mustExist bool, buffer chan [2][]byte) error
+	EntriesAt(bucketPath []string, mustExist bool, buffer chan [2][]byte) error
 	// BucketsAt returns the buckets at the given path.
-	BucketsAt(path []string, mustExist bool, buffer chan []byte) error
+	BucketsAt(bucketPath []string, mustExist bool, buffer chan []byte) error
 	// RunView executes a custom view func on the database.
+	//
+	// Use the RootBucket method to get the root bucket for the transaction.
 	RunView(func(tx *bbolt.Tx) error) error
 	// RunUpdate executes a custom update func on the database.
+	//
+	// Use the RootBucket method to get the root bucket for the transaction.
 	RunUpdate(func(tx *bbolt.Tx) error) error
 	// Close closes the database.
 	Close() error
@@ -53,6 +57,8 @@ type DB interface {
 	Size() Size
 	// Path returns the path of the database file.
 	Path() string
+	// RootBucket returns the root bucket's identifier.
+	RootBucket() []byte
 	// AddLog provides a writer interface through which quickbolt will log
 	// buffer related errors via zerolog.
 	//
@@ -164,6 +170,10 @@ func (d dbWrapper) Size() Size {
 
 func (d dbWrapper) Path() string {
 	return d.db.Path()
+}
+
+func (d dbWrapper) RootBucket() []byte {
+	return []byte(rootBucket)
 }
 
 func (d *dbWrapper) AddLog(w io.Writer) {
