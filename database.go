@@ -38,6 +38,10 @@ type DB interface {
 	EntriesAt(path []string, mustExist bool, buffer chan [2][]byte) error
 	// BucketsAt returns the buckets at the given path.
 	BucketsAt(path []string, mustExist bool, buffer chan []byte) error
+	// RunView executes a custom view func on the underlying store.
+	RunView(func(tx *bbolt.Tx) error) error
+	// RunUpdate executes a custom update func on the underlying store.
+	RunUpdate(func(tx *bbolt.Tx) error) error
 	// Close closes the database.
 	Close() error
 	// RemoveFile deletes the database.
@@ -112,6 +116,14 @@ func (d dbFile) EntriesAt(path []string, mustExist bool, buffer chan [2][]byte) 
 
 func (d dbFile) BucketsAt(path []string, mustExist bool, buffer chan []byte) error {
 	return bucketsAt(d.db, path, mustExist, buffer)
+}
+
+func (d dbFile) RunView(f func(tx *bbolt.Tx) error) error {
+	return d.db.View(f)
+}
+
+func (d dbFile) RunUpdate(f func(tx *bbolt.Tx) error) error {
+	return d.db.Update(f)
 }
 
 func (d dbFile) Close() error {
