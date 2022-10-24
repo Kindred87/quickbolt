@@ -43,11 +43,11 @@ type DB interface {
 	BucketsAt(bucketPath []string, mustExist bool, buffer chan []byte) error
 	// RunView executes a custom view func on the database.
 	//
-	// Use the RootBucket method to get the root bucket for the transaction.
+	// Use the RootBucket method to get the database's root bucket.
 	RunView(func(tx *bbolt.Tx) error) error
 	// RunUpdate executes a custom update func on the database.
 	//
-	// Use the RootBucket method to get the root bucket for the transaction.
+	// Use the RootBucket method to get the database's root bucket.
 	RunUpdate(func(tx *bbolt.Tx) error) error
 	// Close closes the database.
 	Close() error
