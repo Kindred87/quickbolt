@@ -2,9 +2,11 @@ package quickbolt
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
+	"github.com/rs/zerolog"
 	"go.etcd.io/bbolt"
 )
 
@@ -50,6 +52,11 @@ type DB interface {
 	Size() Size
 	// Path returns the path of the open database file.
 	Path() string
+	// AddLog provides a writer interface through which quickbolt will log
+	// buffer related errors via zerolog.
+	//
+	// The default log output is os.Stdout.
+	AddLog(w io.Writer)
 }
 
 // Create generates a database with the given filename and returns a DB
@@ -57,7 +64,7 @@ type DB interface {
 func Create(filename string) (DB, error) {
 	dir, err := execDir()
 	if err != nil {
-		return dbFile{}, fmt.Errorf("error while getting executable dir: %w", err)
+		return nil, fmt.Errorf("error while getting executable dir: %w", err)
 	}
 
 	dbPath := filepath.Join(dir, filename)
@@ -66,16 +73,19 @@ func Create(filename string) (DB, error) {
 
 	d, err := bbolt.Open(dbPath, 0600, nil)
 	if err != nil {
-		return dbFile{}, fmt.Errorf("error while opening db at %s: %w", filename, err)
+		return nil, fmt.Errorf("error while opening db at %s: %w", filename, err)
 	}
 
 	db := dbFile{db: d}
-	return db, nil
+	db.logger = zerolog.New(os.Stdout)
+
+	return &db, nil
 }
 
 // dbFile is an encapsulation of a BBolt DB that implements the DB interface.
 type dbFile struct {
-	db *bbolt.DB
+	db     *bbolt.DB
+	logger zerolog.Logger
 }
 
 func (d dbFile) Upsert(key []byte, val []byte, path []string, addFunc func(a, b []byte) ([]byte, error)) error {
@@ -107,15 +117,15 @@ func (d dbFile) ValuesAt(path []string, mustExist bool) ([][]byte, error) {
 }
 
 func (d dbFile) KeysAt(path []string, mustExist bool, buffer chan []byte) error {
-	return keysAt(d.db, path, mustExist, buffer)
+	return keysAt(d.db, path, mustExist, buffer, d.logger)
 }
 
 func (d dbFile) EntriesAt(path []string, mustExist bool, buffer chan [2][]byte) error {
-	return entriesAt(d.db, path, mustExist, buffer)
+	return entriesAt(d.db, path, mustExist, buffer, d.logger)
 }
 
 func (d dbFile) BucketsAt(path []string, mustExist bool, buffer chan []byte) error {
-	return bucketsAt(d.db, path, mustExist, buffer)
+	return bucketsAt(d.db, path, mustExist, buffer, d.logger)
 }
 
 func (d dbFile) RunView(f func(tx *bbolt.Tx) error) error {
@@ -148,4 +158,8 @@ func (d dbFile) Size() Size {
 
 func (d dbFile) Path() string {
 	return d.db.Path()
+}
+
+func (d *dbFile) AddLog(w io.Writer) {
+	d.logger = zerolog.New(w)
 }
