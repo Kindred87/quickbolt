@@ -129,7 +129,11 @@ func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbW
 
 		c := bkt.Cursor()
 
-		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			if v == nil {
+				continue
+			}
+
 			select {
 			case buffer <- k:
 			case <-time.After(dbWrap.bufferTimeout):
