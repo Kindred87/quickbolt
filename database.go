@@ -13,8 +13,8 @@ import (
 
 type DB interface {
 	// Upsert adds the key-value pair to the db at the given path.  If the key is already present in the
-	// db, then the sum of the existing and given values will be added to the db instead.
-	Upsert(key []byte, val []byte, bucketPath []string, addFunc func(a, b []byte) ([]byte, error)) error
+	// db, then the sum of the existing and given values via add() will be inserted instead.
+	Upsert(key []byte, val []byte, bucketPath []string, add func(a, b []byte) ([]byte, error)) error
 	// Insert adds the given key-value pair to the db at the given path.
 	Insert(key, value []byte, bucketPath []string) error
 	// Delete removes the key-value pair in the db at the given path.
@@ -100,8 +100,8 @@ type dbWrapper struct {
 	bufferTimeout time.Duration
 }
 
-func (d dbWrapper) Upsert(key []byte, val []byte, path []string, addFunc func(a, b []byte) ([]byte, error)) error {
-	return upsert(d.db, key, val, path, addFunc)
+func (d dbWrapper) Upsert(key []byte, val []byte, path []string, add func(a, b []byte) ([]byte, error)) error {
+	return upsert(d.db, key, val, path, add)
 }
 
 func (d dbWrapper) Insert(key, value []byte, path []string) error {

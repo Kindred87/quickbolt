@@ -9,7 +9,7 @@ import (
 
 // upsert adds the key-value pair to the db at the given path.  If the key is already present in the
 // db, then the sum of the existing and given values will be added to the db instead.
-func upsert(db *bbolt.DB, key []byte, val []byte, path []string, addFunc func(a, b []byte) ([]byte, error)) error {
+func upsert(db *bbolt.DB, key []byte, val []byte, path []string, add func(a, b []byte) ([]byte, error)) error {
 	err := db.Batch(func(tx *bbolt.Tx) error {
 		bkt, err := getCreateBucket(tx, path)
 		if err != nil {
@@ -18,7 +18,7 @@ func upsert(db *bbolt.DB, key []byte, val []byte, path []string, addFunc func(a,
 
 		oldVal := bkt.Get(key)
 		if oldVal != nil {
-			new, err := addFunc(oldVal, val)
+			new, err := add(oldVal, val)
 			if err != nil {
 				return fmt.Errorf("error while adding %s and %s: %w", oldVal, val, err)
 			}
