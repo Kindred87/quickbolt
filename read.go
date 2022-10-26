@@ -1,6 +1,7 @@
 package quickbolt
 
 import (
+	"bytes"
 	"fmt"
 	"time"
 
@@ -28,6 +29,41 @@ func getValue(db *bbolt.DB, key []byte, path []string, mustExist bool) ([]byte, 
 		value = bkt.Get(key)
 		if value == nil && mustExist {
 			return fmt.Errorf("could not locate key %s at %#v", string(key), path)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("error while reading value paired with key %s: %w", string(key), err)
+	}
+	return value, nil
+}
+
+func getKey(db *bbolt.DB, value []byte, path []string, mustExist bool) ([]byte, error) {
+	if db == nil {
+		return nil, fmt.Errorf("db is nil")
+	}
+
+	var key []byte
+
+	err := db.View(func(tx *bbolt.Tx) error {
+		bkt, err := getBucket(tx, path, mustExist)
+		if err != nil {
+			return fmt.Errorf("error while navigating path: %w", err)
+		}
+
+		c := bkt.Cursor()
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			if bytes.Equal(v, value) {
+				key = k
+				return nil
+			}
+		}
+
+		if key == nil && mustExist {
+			return fmt.Errorf("could not locate value %s at %#v", string(value), path)
 		}
 
 		return nil

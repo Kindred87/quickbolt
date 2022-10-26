@@ -32,6 +32,12 @@ type DB interface {
 	// If mustExist is true, an error will be returned if the key could not
 	// be found.
 	GetValue(key []byte, bucketPath []string, mustExist bool) ([]byte, error)
+	// getKey returns the key paired with the given value.  The returned value will be nil
+	// if the key could not be found.
+	//
+	// If mustExist is true, an error will be returned if the value could not
+	// be found.
+	GetKey(value []byte, bucketPath []string, mustExist bool) ([]byte, error)
 	// getFirstKeyAt returns the first key at the given path.
 	//
 	// If mustExist is true, an error will be returned if the key could not
@@ -136,6 +142,10 @@ func (d dbWrapper) DeleteValues(value []byte, path []string) error {
 
 func (d dbWrapper) GetValue(key []byte, path []string, mustExist bool) ([]byte, error) {
 	return getValue(d.db, key, path, mustExist)
+}
+
+func (d dbWrapper) GetKey(value []byte, path []string, mustExist bool) ([]byte, error) {
+	return getKey(d.db, value, path, mustExist)
 }
 
 func (d dbWrapper) GetFirstKeyAt(path []string, mustExist bool) ([]byte, error) {
