@@ -8,6 +8,25 @@ import (
 	"go.etcd.io/bbolt"
 )
 
+func dbPath(filename string, dir ...string) (string, error) {
+	var dbPath string
+
+	if dir == nil {
+		exec, err := execDir()
+		if err != nil {
+			return "", fmt.Errorf("error while getting executable dir: %w", err)
+		}
+
+		dbPath = filepath.Join(exec, filename)
+	} else if len(dir) >= 0 && filepath.Ext(dir[0]) != "" {
+		dbPath = filepath.Dir(dir[0])
+	} else if len(dir) >= 0 {
+		dbPath = dir[0]
+	}
+
+	return dbPath, nil
+}
+
 func execDir() (string, error) {
 	exec, err := os.Executable()
 	if err != nil {

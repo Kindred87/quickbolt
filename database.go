@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/rs/zerolog"
@@ -89,32 +88,52 @@ type DB interface {
 // If the database file already exists, it will be deleted and replaced
 // with a new one.
 func Create(filename string, dir ...string) (DB, error) {
-	var dbPath string
-
-	if dir == nil {
-		exec, err := execDir()
-		if err != nil {
-			return nil, fmt.Errorf("error while getting executable dir: %w", err)
-		}
-
-		dbPath = filepath.Join(exec, filename)
-	} else if len(dir) >= 0 && filepath.Ext(dir[0]) != "" {
-		dbPath = filepath.Dir(dir[0])
-	} else if len(dir) >= 0 {
-		dbPath = dir[0]
+	path, err := dbPath(filename, dir...)
+	if err != nil {
+		return nil, fmt.Errorf("error while resolving database path: %w", err)
 	}
 
-	os.Remove(dbPath)
+	os.Remove(path)
 
-	d, err := bbolt.Open(dbPath, 0600, nil)
+	db, err := new(path)
 	if err != nil {
-		return nil, fmt.Errorf("error while opening db at %s: %w", filename, err)
+		return nil, fmt.Errorf("error while opening database: %w", err)
+	}
+
+	return db, nil
+}
+
+func new(path string) (DB, error) {
+	d, err := bbolt.Open(path, 0600, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error while opening db at %s: %w", path, err)
 	}
 
 	db := dbWrapper{db: d, bufferTimeout: defaultBufferTimeout}
 	db.logger = zerolog.New(os.Stdout)
 
 	return &db, nil
+}
+
+// Open opens a database with the given filename and returns a DB
+// interface encapsulating the database.
+//
+// If the dir parameter is provided, the database will be opened there.
+// Otherwise, the database will be opened in the executable's directory.
+//
+// The database will be created if it does not already exist.
+func Open(filename string, dir ...string) (DB, error) {
+	path, err := dbPath(filename, dir...)
+	if err != nil {
+		return nil, fmt.Errorf("error while resolving database path: %w", err)
+	}
+
+	db, err := new(path)
+	if err != nil {
+		return nil, fmt.Errorf("error while opening database: %w", err)
+	}
+
+	return db, nil
 }
 
 // dbWrapper is an encapsulation of a BBolt DB that implements the DB interface.
