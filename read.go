@@ -72,7 +72,7 @@ func getKey(db *bbolt.DB, value []byte, path []string, mustExist bool) ([]byte, 
 	if err != nil {
 		return nil, fmt.Errorf("error while reading value paired with key %s: %w", string(key), err)
 	}
-	return value, nil
+	return key, nil
 }
 
 func getBucket(tx *bbolt.Tx, path []string, mustExist bool) (*bbolt.Bucket, error) {
