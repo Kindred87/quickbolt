@@ -24,6 +24,8 @@ func getValue(db *bbolt.DB, key []byte, path []string, mustExist bool) ([]byte, 
 		bkt, err := getBucket(tx, path, mustExist)
 		if err != nil {
 			return fmt.Errorf("error while navigating path: %w", err)
+		} else if bkt == nil {
+			return nil
 		}
 
 		value = bkt.Get(key)
@@ -108,6 +110,8 @@ func getFirstKeyAt(db *bbolt.DB, path []string, mustExist bool) ([]byte, error) 
 		bkt, err := getBucket(tx, path, mustExist)
 		if err != nil {
 			return fmt.Errorf("error while navigating path: %w", err)
+		} else if bkt == nil {
+			return nil
 		}
 
 		c := bkt.Cursor()
@@ -138,6 +142,8 @@ func valuesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, d
 		bkt, err := getBucket(tx, path, mustExist)
 		if err != nil {
 			return fmt.Errorf("error while navigating path: %w", err)
+		} else if bkt == nil {
+			return nil
 		}
 
 		c := bkt.Cursor()
@@ -170,6 +176,8 @@ func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbW
 		bkt, err := getBucket(tx, path, mustExist)
 		if err != nil {
 			return fmt.Errorf("error while navigating path: %w", err)
+		} else if bkt == nil {
+			return nil
 		}
 
 		c := bkt.Cursor()
@@ -203,6 +211,8 @@ func entriesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan [2][]byt
 		bkt, err := getBucket(tx, path, mustExist)
 		if err != nil {
 			return fmt.Errorf("error while navigating path: %w", err)
+		} else if bkt == nil {
+			return nil
 		}
 
 		c := bkt.Cursor()
@@ -236,6 +246,8 @@ func bucketsAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, 
 		bkt, err := getBucket(tx, path, mustExist)
 		if err != nil {
 			return fmt.Errorf("error while navigating path: %w", err)
+		} else if bkt == nil {
+			return nil
 		}
 
 		c := bkt.Cursor()
