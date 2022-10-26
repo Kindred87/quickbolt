@@ -33,7 +33,7 @@ type DB interface {
 	// be found.
 	GetValue(key []byte, bucketPath []string, mustExist bool) ([]byte, error)
 	// getKey returns the key paired with the given value.  The returned value will be nil
-	// if the key could not be found.
+	// if the value could not be found.
 	//
 	// If mustExist is true, an error will be returned if the value could not
 	// be found.
