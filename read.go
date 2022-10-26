@@ -51,6 +51,8 @@ func getKey(db *bbolt.DB, value []byte, path []string, mustExist bool) ([]byte, 
 		bkt, err := getBucket(tx, path, mustExist)
 		if err != nil {
 			return fmt.Errorf("error while navigating path: %w", err)
+		} else if bkt == nil {
+			return nil
 		}
 
 		c := bkt.Cursor()
