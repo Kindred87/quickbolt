@@ -149,9 +149,11 @@ func valuesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, d
 		c := bkt.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
+			timer := time.NewTimer(dbWrap.bufferTimeout)
 			select {
 			case buffer <- k:
-			case <-time.After(dbWrap.bufferTimeout):
+				timer.Stop()
+			case <-timer.C:
 				err := fmt.Errorf("quickbolt value retrieval timed out while waiting to send to buffer")
 				dbWrap.logger.Err(err).Msg("")
 				return err
@@ -187,9 +189,11 @@ func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbW
 				continue
 			}
 
+			timer := time.NewTimer(dbWrap.bufferTimeout)
 			select {
 			case buffer <- k:
-			case <-time.After(dbWrap.bufferTimeout):
+				timer.Stop()
+			case <-timer.C:
 				err := fmt.Errorf("quickbolt key retrieval timed out while waiting to send to buffer")
 				dbWrap.logger.Err(err).Msg("")
 				return err
@@ -222,9 +226,11 @@ func entriesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan [2][]byt
 				continue
 			}
 
+			timer := time.NewTimer(dbWrap.bufferTimeout)
 			select {
 			case buffer <- [2][]byte{k, v}:
-			case <-time.After(dbWrap.bufferTimeout):
+				timer.Stop()
+			case <-timer.C:
 				err := fmt.Errorf("quickbolt key scanning timed out while waiting to send to buffer")
 				dbWrap.logger.Err(err).Msg("")
 				return err
@@ -256,9 +262,12 @@ func bucketsAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, 
 			if v != nil {
 				continue
 			}
+
+			timer := time.NewTimer(dbWrap.bufferTimeout)
 			select {
 			case buffer <- k:
-			case <-time.After(dbWrap.bufferTimeout):
+				timer.Stop()
+			case <-timer.C:
 				err := fmt.Errorf("quickbolt key scanning timed out while waiting to send to buffer")
 				dbWrap.logger.Err(err).Msg("")
 				return err
