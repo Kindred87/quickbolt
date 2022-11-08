@@ -153,7 +153,9 @@ func valuesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, d
 				timer.Stop()
 			case <-timer.C:
 				err := newErrTimeout("quickbolt value retrieval", "waiting to send to buffer")
+				logMutex.Lock()
 				dbWrap.logger.Err(err).Msg("")
+				logMutex.Unlock()
 				return err
 			}
 			values = append(values, v)
@@ -193,7 +195,9 @@ func keysAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, dbW
 				timer.Stop()
 			case <-timer.C:
 				err := newErrTimeout("quickbolt key retrieval", "waiting to send to buffer")
+				logMutex.Lock()
 				dbWrap.logger.Err(err).Msg("")
+				logMutex.Unlock()
 				return err
 			}
 		}
@@ -230,7 +234,9 @@ func entriesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan [2][]byt
 				timer.Stop()
 			case <-timer.C:
 				err := newErrTimeout("quickbolt key scanning", "waiting to send to buffer")
+				logMutex.Lock()
 				dbWrap.logger.Err(err).Msg("")
+				logMutex.Unlock()
 				return err
 			}
 		}
@@ -267,7 +273,9 @@ func bucketsAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, 
 				timer.Stop()
 			case <-timer.C:
 				err := newErrTimeout("quickbolt key scanning", "waiting to send to buffer")
+				logMutex.Lock()
 				dbWrap.logger.Err(err).Msg("")
+				logMutex.Unlock()
 				return err
 			}
 		}
