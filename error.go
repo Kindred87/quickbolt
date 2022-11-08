@@ -3,10 +3,11 @@ package quickbolt
 import "fmt"
 
 const (
-	errLocateMsg          = "could not locate"
-	errAccessMsg          = "could not access"
-	errUnsupportedTypeMsg = "is unsupported type"
-	errTimeoutMsg         = "timed out"
+	errLocateMsg               = "could not locate"
+	errAccessMsg               = "could not access"
+	errUnsupportedTypeMsg      = "is unsupported type"
+	errTimeoutMsg              = "timed out while"
+	errBucketPathResolutionMsg = "while resolving bucket path"
 )
 
 // "could not locate X"
@@ -64,4 +65,18 @@ func (e ErrTimeout) Error() string {
 // who "timed out while" what
 func newErrTimeout(who, what string) error {
 	return ErrTimeout{Who: who, What: what}
+}
+
+// "X while resolving bucket path"
+type ErrBucketPathResolution struct {
+	What string
+}
+
+func (e ErrBucketPathResolution) Error() string {
+	return fmt.Sprintf("%s %s", e.What, errBucketPathResolutionMsg)
+}
+
+// what "while resolving bucket path"
+func newErrBucketPathResolution(what string) error {
+	return ErrBucketPathResolution{What: what}
 }

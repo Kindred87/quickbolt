@@ -12,7 +12,7 @@ import (
 // The returned value will be nil if the key could not be found.
 //
 // If mustExist is true, an error will be returned if the key could not be found.
-func getValue(db *bbolt.DB, key []byte, path []string, mustExist bool) ([]byte, error) {
+func getValue(db *bbolt.DB, key []byte, path [][]byte, mustExist bool) ([]byte, error) {
 	if db == nil {
 		return nil, fmt.Errorf("db is nil")
 	}
@@ -41,7 +41,7 @@ func getValue(db *bbolt.DB, key []byte, path []string, mustExist bool) ([]byte, 
 	return value, nil
 }
 
-func getKey(db *bbolt.DB, value []byte, path []string, mustExist bool) ([]byte, error) {
+func getKey(db *bbolt.DB, value []byte, path [][]byte, mustExist bool) ([]byte, error) {
 	if db == nil {
 		return nil, fmt.Errorf("db is nil")
 	}
@@ -78,7 +78,7 @@ func getKey(db *bbolt.DB, value []byte, path []string, mustExist bool) ([]byte, 
 	return key, nil
 }
 
-func getBucket(tx *bbolt.Tx, path []string, mustExist bool) (*bbolt.Bucket, error) {
+func getBucket(tx *bbolt.Tx, path [][]byte, mustExist bool) (*bbolt.Bucket, error) {
 	bkt := tx.Bucket([]byte(rootBucket))
 	if bkt == nil && mustExist {
 		return nil, newErrAccess(fmt.Sprintf("%s in %#v", path[0], path))
@@ -87,7 +87,7 @@ func getBucket(tx *bbolt.Tx, path []string, mustExist bool) (*bbolt.Bucket, erro
 	}
 
 	for _, p := range path {
-		bkt = bkt.Bucket([]byte(p))
+		bkt = bkt.Bucket(p)
 		if bkt == nil && mustExist {
 			return nil, newErrAccess(fmt.Sprintf("%s in %#v", p, path))
 		} else if bkt == nil {
@@ -101,7 +101,7 @@ func getBucket(tx *bbolt.Tx, path []string, mustExist bool) (*bbolt.Bucket, erro
 // getFirstKeyAt returns the first key at the given path.
 //
 // If mustExist is true, an error will be returned if the key could not be found.
-func getFirstKeyAt(db *bbolt.DB, path []string, mustExist bool) ([]byte, error) {
+func getFirstKeyAt(db *bbolt.DB, path [][]byte, mustExist bool) ([]byte, error) {
 	var key []byte
 
 	err := db.View(func(tx *bbolt.Tx) error {
@@ -129,7 +129,7 @@ func getFirstKeyAt(db *bbolt.DB, path []string, mustExist bool) ([]byte, error) 
 	return key, nil
 }
 
-func valuesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
+func valuesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
 	if db == nil {
 		return fmt.Errorf("db is nil")
 	}
@@ -169,7 +169,7 @@ func valuesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, d
 	return nil
 }
 
-func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
+func keysAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
 	defer close(buffer)
 
 	err := db.View(func(tx *bbolt.Tx) error {
@@ -206,7 +206,7 @@ func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbW
 	return nil
 }
 
-func entriesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan [2][]byte, dbWrap dbWrapper) error {
+func entriesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan [2][]byte, dbWrap dbWrapper) error {
 	defer close(buffer)
 
 	err := db.View(func(tx *bbolt.Tx) error {
@@ -243,7 +243,7 @@ func entriesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan [2][]byt
 	return nil
 }
 
-func bucketsAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
+func bucketsAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
 	defer close(buffer)
 
 	err := db.View(func(tx *bbolt.Tx) error {

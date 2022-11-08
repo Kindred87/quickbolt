@@ -14,38 +14,60 @@ type DB interface {
 	// Upsert adds the key-value pair to the db at the given path.
 	// If the key is already present in the db, then the sum of the existing and given values via add() will be inserted instead.
 	//
-	// Buckets in the path are created if they do not already exist.
-	Upsert(key []byte, val []byte, bucketPath []string, add func(a, b []byte) ([]byte, error)) error
-	// Insert adds the given key-value pair to the db at the given path.
+	// BucketPath must be of type []string or [][]byte.
 	//
 	// Buckets in the path are created if they do not already exist.
-	Insert(key, value []byte, bucketPath []string) error
+	Upsert(key []byte, val []byte, bucketPath interface{}, add func(a, b []byte) ([]byte, error)) error
+	// Insert adds the given key-value pair to the db at the given path.
+	//
+	// BucketPath must be of type []string or [][]byte.
+	//
+	// Buckets in the path are created if they do not already exist.
+	Insert(key, value []byte, bucketPath interface{}) error
 	// Delete removes the key-value pair in the db at the given path.
-	Delete(key []byte, bucketPath []string) error
+	//
+	// BucketPath must be of type []string or [][]byte.
+	Delete(key []byte, bucketPath interface{}) error
 	// DeleteValues removes all key-value pairs in the db at the given path where the value matches the one given.
-	DeleteValues(value []byte, bucketPath []string) error
+	//
+	// BucketPath must be of type []string or [][]byte.
+	DeleteValues(value []byte, bucketPath interface{}) error
 	// getValue returns the value paired with the given key.
 	// The returned value will be nil if the key could not be found.
 	//
+	// BucketPath must be of type []string or [][]byte.
+	//
 	// If mustExist is true, an error will be returned if the key could not be found.
-	GetValue(key []byte, bucketPath []string, mustExist bool) ([]byte, error)
+	GetValue(key []byte, bucketPath interface{}, mustExist bool) ([]byte, error)
 	// getKey returns the key paired with the given value.
 	// The returned value will be nil if the value could not be found.
 	//
+	// BucketPath must be of type []string or [][]byte.
+	//
 	// If mustExist is true, an error will be returned if the value could not be found.
-	GetKey(value []byte, bucketPath []string, mustExist bool) ([]byte, error)
+	GetKey(value []byte, bucketPath interface{}, mustExist bool) ([]byte, error)
 	// getFirstKeyAt returns the first key at the given path.
 	//
+	// BucketPath must be of type []string or [][]byte.
+	//
 	// If mustExist is true, an error will be returned if the key could not be found.
-	GetFirstKeyAt(bucketPath []string, mustExist bool) ([]byte, error)
+	GetFirstKeyAt(bucketPath interface{}, mustExist bool) ([]byte, error)
 	// ValuesAt returns the values for all the keys at the given path.
-	ValuesAt(bucketPath []string, mustExist bool, buffer chan []byte) error
+	//
+	// BucketPath must be of type []string or [][]byte.
+	ValuesAt(bucketPath interface{}, mustExist bool, buffer chan []byte) error
 	// KeysAt returns the keys at the given path.
-	KeysAt(bucketPath []string, mustExist bool, buffer chan []byte) error
+	//
+	// BucketPath must be of type []string or [][]byte.
+	KeysAt(bucketPath interface{}, mustExist bool, buffer chan []byte) error
 	// EntriesAt returns the key-value pairs at the given path.
-	EntriesAt(bucketPath []string, mustExist bool, buffer chan [2][]byte) error
+	//
+	// BucketPath must be of type []string or [][]byte.
+	EntriesAt(bucketPath interface{}, mustExist bool, buffer chan [2][]byte) error
 	// BucketsAt returns the buckets at the given path.
-	BucketsAt(bucketPath []string, mustExist bool, buffer chan []byte) error
+	//
+	// BucketPath must be of type []string or [][]byte.
+	BucketsAt(bucketPath interface{}, mustExist bool, buffer chan []byte) error
 	// RunView executes a custom view func on the database.
 	//
 	// Use the RootBucket method to get the database's root bucket.
@@ -136,48 +158,103 @@ type dbWrapper struct {
 	bufferTimeout time.Duration
 }
 
-func (d dbWrapper) Upsert(key []byte, val []byte, path []string, add func(a, b []byte) ([]byte, error)) error {
-	return upsert(d.db, key, val, path, add)
+func (d dbWrapper) Upsert(key []byte, val []byte, path interface{}, add func(a, b []byte) ([]byte, error)) error {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return newErrBucketPathResolution("error")
+	}
+
+	return upsert(d.db, key, val, p, add)
 }
 
-func (d dbWrapper) Insert(key, value []byte, path []string) error {
-	return insert(d.db, key, value, path)
+func (d dbWrapper) Insert(key, value []byte, path interface{}) error {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return newErrBucketPathResolution("error")
+	}
+
+	return insert(d.db, key, value, p)
 }
 
-func (d dbWrapper) Delete(key []byte, path []string) error {
-	return delete(d.db, key, path)
+func (d dbWrapper) Delete(key []byte, path interface{}) error {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return newErrBucketPathResolution("error")
+	}
+
+	return delete(d.db, key, p)
 }
 
-func (d dbWrapper) DeleteValues(value []byte, path []string) error {
-	return deleteValues(d.db, value, path)
+func (d dbWrapper) DeleteValues(value []byte, path interface{}) error {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return newErrBucketPathResolution("error")
+	}
+
+	return deleteValues(d.db, value, p)
 }
 
-func (d dbWrapper) GetValue(key []byte, path []string, mustExist bool) ([]byte, error) {
-	return getValue(d.db, key, path, mustExist)
+func (d dbWrapper) GetValue(key []byte, path interface{}, mustExist bool) ([]byte, error) {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return nil, newErrBucketPathResolution("error")
+	}
+
+	return getValue(d.db, key, p, mustExist)
 }
 
-func (d dbWrapper) GetKey(value []byte, path []string, mustExist bool) ([]byte, error) {
-	return getKey(d.db, value, path, mustExist)
+func (d dbWrapper) GetKey(value []byte, path interface{}, mustExist bool) ([]byte, error) {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return nil, newErrBucketPathResolution("error")
+	}
+
+	return getKey(d.db, value, p, mustExist)
 }
 
-func (d dbWrapper) GetFirstKeyAt(path []string, mustExist bool) ([]byte, error) {
-	return getFirstKeyAt(d.db, path, mustExist)
+func (d dbWrapper) GetFirstKeyAt(path interface{}, mustExist bool) ([]byte, error) {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return nil, newErrBucketPathResolution("error")
+	}
+
+	return getFirstKeyAt(d.db, p, mustExist)
 }
 
-func (d dbWrapper) ValuesAt(path []string, mustExist bool, buffer chan []byte) error {
-	return valuesAt(d.db, path, mustExist, buffer, d)
+func (d dbWrapper) ValuesAt(path interface{}, mustExist bool, buffer chan []byte) error {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return newErrBucketPathResolution("error")
+	}
+
+	return valuesAt(d.db, p, mustExist, buffer, d)
 }
 
-func (d dbWrapper) KeysAt(path []string, mustExist bool, buffer chan []byte) error {
-	return keysAt(d.db, path, mustExist, buffer, d)
+func (d dbWrapper) KeysAt(path interface{}, mustExist bool, buffer chan []byte) error {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return newErrBucketPathResolution("error")
+	}
+
+	return keysAt(d.db, p, mustExist, buffer, d)
 }
 
-func (d dbWrapper) EntriesAt(path []string, mustExist bool, buffer chan [2][]byte) error {
-	return entriesAt(d.db, path, mustExist, buffer, d)
+func (d dbWrapper) EntriesAt(path interface{}, mustExist bool, buffer chan [2][]byte) error {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return newErrBucketPathResolution("error")
+	}
+
+	return entriesAt(d.db, p, mustExist, buffer, d)
 }
 
-func (d dbWrapper) BucketsAt(path []string, mustExist bool, buffer chan []byte) error {
-	return bucketsAt(d.db, path, mustExist, buffer, d)
+func (d dbWrapper) BucketsAt(path interface{}, mustExist bool, buffer chan []byte) error {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return newErrBucketPathResolution("error")
+	}
+
+	return bucketsAt(d.db, p, mustExist, buffer, d)
 }
 
 func (d dbWrapper) RunView(f func(tx *bbolt.Tx) error) error {
