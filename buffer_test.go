@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"sync"
 	"testing"
@@ -22,7 +23,7 @@ func TestCaptureBytes(t *testing.T) {
 		buffer     chan []byte
 		mut        *sync.Mutex
 		ctx        *context.Context
-		timeoutLog *io.Writer
+		timeoutLog io.Writer
 		timeout    []time.Duration
 	}
 	tests := []struct {
@@ -32,7 +33,7 @@ func TestCaptureBytes(t *testing.T) {
 		wantErr bool
 		success func() bool
 	}{
-		{name: "String", args: args{intoSlice: &stringSlice, buffer: make(chan []byte)}, send: [][]byte{[]byte("foo1")}, wantErr: false, success: func() bool { return stringSlice[0] == "foo1" }},
+		{name: "String", args: args{intoSlice: &stringSlice, buffer: make(chan []byte), timeoutLog: os.Stdout}, send: [][]byte{[]byte("foo1")}, wantErr: false, success: func() bool { return stringSlice[0] == "foo1" }},
 		{name: "No slice", args: args{buffer: make(chan []byte)}, wantErr: true},
 		{name: "Uint slice", args: args{intoSlice: &[]uint{}, buffer: make(chan []byte)}, send: [][]byte{[]byte(strconv.FormatUint(1, 2))}, wantErr: true},
 		{name: "Mutex", args: args{intoSlice: &stringSlice, buffer: make(chan []byte), mut: &sync.Mutex{}}, send: [][]byte{[]byte("foo2")}, wantErr: false},
@@ -82,7 +83,7 @@ func TestFilter(t *testing.T) {
 		out     chan []byte
 		allow   func([]byte) bool
 		ctx     *context.Context
-		logger  *io.Writer
+		logger  io.Writer
 		timeout []time.Duration
 	}
 	tests := []struct {
@@ -92,7 +93,7 @@ func TestFilter(t *testing.T) {
 		wantSent bool
 		wantErr  bool
 	}{
-		{name: "Basic", args: args{in: make(chan []byte), out: make(chan []byte), allow: func(b []byte) bool { return bytes.Equal(b, []byte("foo")) }}, send: []byte("foo"), wantSent: true, wantErr: false},
+		{name: "Basic", args: args{in: make(chan []byte), out: make(chan []byte), allow: func(b []byte) bool { return bytes.Equal(b, []byte("foo")) }, logger: os.Stdout}, send: []byte("foo"), wantSent: true, wantErr: false},
 		{name: "Filter out", args: args{in: make(chan []byte), out: make(chan []byte), allow: func(b []byte) bool { return bytes.Equal(b, []byte("foo")) }}, send: []byte("dark foo"), wantSent: false, wantErr: false},
 	}
 	for _, tt := range tests {
