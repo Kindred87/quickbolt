@@ -2,17 +2,19 @@
 
 quickbolt provides a streamlined API for the creation and concurrent interaction of [bbolt](https://github.com/etcd-io/bbolt) databases.
 
-# install
+# Install
 ```
 go get github.com/Kindred87/quickbolt
 ```
 
-# quickstart
+# Quickstart
 
 ``` go
 package main
 
 import (
+    "log"
+    "fmt"
     "github.com/Kindred87/quickbolt"
 )
 
