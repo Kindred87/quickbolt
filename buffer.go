@@ -78,14 +78,14 @@ func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ct
 				}
 				*sl = append(*sl, f)
 			default:
-				return fmt.Errorf("slice type is unsupported")
+				return newErrUnsupportedType("slice")
 			}
 
 			if mut != nil {
 				mut.Unlock()
 			}
 		case <-timer.C:
-			err := fmt.Errorf("byte capture timed out while waiting to receive from input buffer")
+			err := newErrTimeout("byte captured", "waiting to receive from input buffer")
 			if timeoutLog != nil {
 				timeoutLog.Write([]byte(err.Error()))
 			}
@@ -138,7 +138,7 @@ func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx contex
 				case out <- v:
 					timer.Stop()
 				case <-timer.C:
-					err := fmt.Errorf("buffer filtration timed out while waiting to send to output buffer")
+					err := newErrTimeout("buffer filtration", "waiting to send to output buffer")
 					if timeoutLog != nil {
 						timeoutLog.Write([]byte(err.Error()))
 					}
@@ -146,7 +146,7 @@ func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx contex
 				}
 			}
 		case <-timer.C:
-			err := fmt.Errorf("buffer filtration timed out while waiting to receive from input buffer")
+			err := newErrTimeout("buffer filtration", "waiting to receive from input buffer")
 			if timeoutLog != nil {
 				timeoutLog.Write([]byte(err.Error()))
 			}
@@ -207,7 +207,7 @@ func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out c
 				timer := time.NewTimer(timeout[0])
 				select {
 				case <-timer.C:
-					err := fmt.Errorf("do each execution timed out while waiting to create new goroutine using %s", string(v))
+					err := newErrTimeout("do each execution", fmt.Sprintf("waiting to create new goroutine using %s", string(v)))
 					if timeoutLog != nil {
 						timeoutLog.Write([]byte(err.Error()))
 					}
@@ -220,7 +220,7 @@ func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out c
 			}
 
 		case <-timer.C:
-			err := fmt.Errorf("do each execution timed out while waiting to receive from input buffer")
+			err := newErrTimeout("do each execution", "waiting to receive from input buffer")
 			if timeoutLog != nil {
 				timeoutLog.Write([]byte(err.Error()))
 			}
@@ -260,7 +260,7 @@ func Send(buffer chan []byte, value []byte, ctx context.Context, timeoutLog io.W
 		timer.Stop()
 		return nil
 	case <-timer.C:
-		err := fmt.Errorf("buffer send for value %s timed out while waiting to send to buffer", string(value))
+		err := newErrTimeout(fmt.Sprintf("buffer send for value %s", value), "waiting to send to buffer")
 		if timeoutLog != nil {
 			timeoutLog.Write([]byte(err.Error()))
 		}

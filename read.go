@@ -29,7 +29,7 @@ func getValue(db *bbolt.DB, key []byte, path []string, mustExist bool) ([]byte, 
 
 		value = bkt.Get(key)
 		if value == nil && mustExist {
-			return fmt.Errorf("could not locate key %s at %#v", string(key), path)
+			return newErrLocate(fmt.Sprintf("key %s at %#v", string(key), path))
 		}
 
 		return nil
@@ -66,7 +66,7 @@ func getKey(db *bbolt.DB, value []byte, path []string, mustExist bool) ([]byte, 
 		}
 
 		if key == nil && mustExist {
-			return fmt.Errorf("could not locate value %s at %#v", string(value), path)
+			return newErrLocate(fmt.Sprintf("value %s at %#v", string(value), path))
 		}
 
 		return nil
@@ -81,7 +81,7 @@ func getKey(db *bbolt.DB, value []byte, path []string, mustExist bool) ([]byte, 
 func getBucket(tx *bbolt.Tx, path []string, mustExist bool) (*bbolt.Bucket, error) {
 	bkt := tx.Bucket([]byte(rootBucket))
 	if bkt == nil && mustExist {
-		return nil, fmt.Errorf("%w %s in %#v", ErrAccess, path[0], path)
+		return nil, newErrAccess(fmt.Sprintf("%s in %#v", path[0], path))
 	} else if bkt == nil {
 		return nil, nil
 	}
@@ -89,7 +89,7 @@ func getBucket(tx *bbolt.Tx, path []string, mustExist bool) (*bbolt.Bucket, erro
 	for _, p := range path {
 		bkt = bkt.Bucket([]byte(p))
 		if bkt == nil && mustExist {
-			return nil, fmt.Errorf("%w %s in %#v", ErrAccess, p, path)
+			return nil, newErrAccess(fmt.Sprintf("%s in %#v", p, path))
 		} else if bkt == nil {
 			return nil, nil
 		}
@@ -116,7 +116,7 @@ func getFirstKeyAt(db *bbolt.DB, path []string, mustExist bool) ([]byte, error) 
 		key, _ = c.First()
 
 		if key == nil && mustExist {
-			return fmt.Errorf("could not locate first key at %#v", path)
+			return newErrLocate(fmt.Sprintf("first key at %#v", path))
 		}
 
 		return nil
@@ -152,7 +152,7 @@ func valuesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, d
 			case buffer <- k:
 				timer.Stop()
 			case <-timer.C:
-				err := fmt.Errorf("quickbolt value retrieval timed out while waiting to send to buffer")
+				err := newErrTimeout("quickbolt value retrieval", "waiting to send to buffer")
 				dbWrap.logger.Err(err).Msg("")
 				return err
 			}
@@ -192,7 +192,7 @@ func keysAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, dbW
 			case buffer <- k:
 				timer.Stop()
 			case <-timer.C:
-				err := fmt.Errorf("quickbolt key retrieval timed out while waiting to send to buffer")
+				err := newErrTimeout("quickbolt key retrieval", "waiting to send to buffer")
 				dbWrap.logger.Err(err).Msg("")
 				return err
 			}
@@ -229,7 +229,7 @@ func entriesAt(db *bbolt.DB, path []string, mustExist bool, buffer chan [2][]byt
 			case buffer <- [2][]byte{k, v}:
 				timer.Stop()
 			case <-timer.C:
-				err := fmt.Errorf("quickbolt key scanning timed out while waiting to send to buffer")
+				err := newErrTimeout("quickbolt key scanning", "waiting to send to buffer")
 				dbWrap.logger.Err(err).Msg("")
 				return err
 			}
@@ -266,7 +266,7 @@ func bucketsAt(db *bbolt.DB, path []string, mustExist bool, buffer chan []byte, 
 			case buffer <- k:
 				timer.Stop()
 			case <-timer.C:
-				err := fmt.Errorf("quickbolt key scanning timed out while waiting to send to buffer")
+				err := newErrTimeout("quickbolt key scanning", "waiting to send to buffer")
 				dbWrap.logger.Err(err).Msg("")
 				return err
 			}
