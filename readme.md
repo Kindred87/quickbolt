@@ -24,12 +24,12 @@ func main() {
 
     defer db.RemoveFile()
 
-    err := db.Insert([]byte("name"), []byte("quickbolt"), []string{"programs", "quickbolt"})
+    err := db.Insert("name", "quickbolt", []string{"programs", "quickbolt"})
     if err != nil {
         log.Fatalf("error while writing to db: %s", err.Error())
     }
 
-    b, err := db.GetValue([]byte("name"), []string{"programs", "quickbolt"}, true)
+    b, err := db.GetValue("name", []string{"programs", "quickbolt"}, true)
     if err != nil {
         log.Fatalf("error while getting name from db: %s", err.Error())
     }

@@ -1,6 +1,9 @@
 package quickbolt
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 // resolveBucketPath returns a [] byte slice representing a bucket path.
 //
@@ -21,6 +24,27 @@ func resolveBucketPath(p interface{}) ([][]byte, error) {
 		resolved = append(resolved, path...)
 	default:
 		return nil, newErrUnsupportedType("path")
+	}
+
+	return resolved, nil
+}
+
+func resolveRecord(r interface{}) ([]byte, error) {
+	if r == nil {
+		return nil, fmt.Errorf("record is nil")
+	}
+
+	var resolved []byte
+
+	switch record := r.(type) {
+	case []byte:
+		resolved = append(resolved, record...)
+	case string:
+		resolved = []byte(record)
+	case int:
+		resolved = []byte(strconv.Itoa(record))
+	default:
+		return nil, newErrUnsupportedType("record")
 	}
 
 	return resolved, nil

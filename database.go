@@ -14,39 +14,55 @@ type DB interface {
 	// Upsert adds the key-value pair to the db at the given path.
 	// If the key is already present in the db, then the sum of the existing and given values via add() will be inserted instead.
 	//
+	// Key and val must be of type []byte, string, or int.
+	//
+	// Key and val must be of type []byte, string, or int.
+	//
 	// BucketPath must be of type []string or [][]byte.
 	//
 	// Buckets in the path are created if they do not already exist.
-	Upsert(key []byte, val []byte, bucketPath interface{}, add func(a, b []byte) ([]byte, error)) error
+	Upsert(key, val, bucketPath interface{}, add func(a, b []byte) ([]byte, error)) error
 	// Insert adds the given key-value pair to the db at the given path.
 	//
+	// Key and val must be of type []byte, string, or int.
+	//
 	// BucketPath must be of type []string or [][]byte.
 	//
 	// Buckets in the path are created if they do not already exist.
-	Insert(key, value []byte, bucketPath interface{}) error
+	Insert(key, value, bucketPath interface{}) error
 	// Delete removes the key-value pair in the db at the given path.
 	//
-	// BucketPath must be of type []string or [][]byte.
-	Delete(key []byte, bucketPath interface{}) error
-	// DeleteValues removes all key-value pairs in the db at the given path where the value matches the one given.
+	// Key and val must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
-	DeleteValues(value []byte, bucketPath interface{}) error
+	Delete(key, bucketPath interface{}) error
+	// DeleteValues removes all key-value pairs in the db at the given path where the value matches the one given.
+	//
+	// Key and val must be of type []byte, string, or int.
+	//
+	// BucketPath must be of type []string or [][]byte.
+	DeleteValues(value, bucketPath interface{}) error
 	// getValue returns the value paired with the given key.
 	// The returned value will be nil if the key could not be found.
+	//
+	// Key and val must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
 	// If mustExist is true, an error will be returned if the key could not be found.
-	GetValue(key []byte, bucketPath interface{}, mustExist bool) ([]byte, error)
+	GetValue(key, bucketPath interface{}, mustExist bool) ([]byte, error)
 	// getKey returns the key paired with the given value.
 	// The returned value will be nil if the value could not be found.
+	//
+	// Key and val must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
 	// If mustExist is true, an error will be returned if the value could not be found.
-	GetKey(value []byte, bucketPath interface{}, mustExist bool) ([]byte, error)
+	GetKey(value, bucketPath interface{}, mustExist bool) ([]byte, error)
 	// getFirstKeyAt returns the first key at the given path.
+	//
+	// Key and val must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
@@ -54,17 +70,25 @@ type DB interface {
 	GetFirstKeyAt(bucketPath interface{}, mustExist bool) ([]byte, error)
 	// ValuesAt returns the values for all the keys at the given path.
 	//
+	// Key and val must be of type []byte, string, or int.
+	//
 	// BucketPath must be of type []string or [][]byte.
 	ValuesAt(bucketPath interface{}, mustExist bool, buffer chan []byte) error
 	// KeysAt returns the keys at the given path.
+	//
+	// Key and val must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	KeysAt(bucketPath interface{}, mustExist bool, buffer chan []byte) error
 	// EntriesAt returns the key-value pairs at the given path.
 	//
+	// Key and val must be of type []byte, string, or int.
+	//
 	// BucketPath must be of type []string or [][]byte.
 	EntriesAt(bucketPath interface{}, mustExist bool, buffer chan [2][]byte) error
 	// BucketsAt returns the buckets at the given path.
+	//
+	// Key and val must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	BucketsAt(bucketPath interface{}, mustExist bool, buffer chan []byte) error
@@ -158,58 +182,98 @@ type dbWrapper struct {
 	bufferTimeout time.Duration
 }
 
-func (d dbWrapper) Upsert(key []byte, val []byte, path interface{}, add func(a, b []byte) ([]byte, error)) error {
+func (d dbWrapper) Upsert(key, val, path interface{}, add func(a, b []byte) ([]byte, error)) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
 		return newErrBucketPathResolution("error")
 	}
 
-	return upsert(d.db, key, val, p, add)
+	k, err := resolveRecord(key)
+	if err != nil {
+		return newErrRecordResolution("key", key)
+	}
+
+	v, err := resolveRecord(val)
+	if err != nil {
+		return newErrRecordResolution("value", val)
+	}
+
+	return upsert(d.db, k, v, p, add)
 }
 
-func (d dbWrapper) Insert(key, value []byte, path interface{}) error {
+func (d dbWrapper) Insert(key, val, path interface{}) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
 		return newErrBucketPathResolution("error")
 	}
 
-	return insert(d.db, key, value, p)
+	k, err := resolveRecord(key)
+	if err != nil {
+		return newErrRecordResolution("key", key)
+	}
+
+	v, err := resolveRecord(val)
+	if err != nil {
+		return newErrRecordResolution("value", val)
+	}
+
+	return insert(d.db, k, v, p)
 }
 
-func (d dbWrapper) Delete(key []byte, path interface{}) error {
+func (d dbWrapper) Delete(key, path interface{}) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
 		return newErrBucketPathResolution("error")
 	}
 
-	return delete(d.db, key, p)
+	k, err := resolveRecord(key)
+	if err != nil {
+		return newErrRecordResolution("key", key)
+	}
+
+	return delete(d.db, k, p)
 }
 
-func (d dbWrapper) DeleteValues(value []byte, path interface{}) error {
+func (d dbWrapper) DeleteValues(val, path interface{}) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
 		return newErrBucketPathResolution("error")
 	}
 
-	return deleteValues(d.db, value, p)
+	v, err := resolveRecord(val)
+	if err != nil {
+		return newErrRecordResolution("value", val)
+	}
+
+	return deleteValues(d.db, v, p)
 }
 
-func (d dbWrapper) GetValue(key []byte, path interface{}, mustExist bool) ([]byte, error) {
+func (d dbWrapper) GetValue(key, path interface{}, mustExist bool) ([]byte, error) {
 	p, err := resolveBucketPath(path)
 	if err != nil {
 		return nil, newErrBucketPathResolution("error")
 	}
 
-	return getValue(d.db, key, p, mustExist)
+	k, err := resolveRecord(key)
+	if err != nil {
+		return nil, newErrRecordResolution("key", key)
+	}
+
+	return getValue(d.db, k, p, mustExist)
 }
 
-func (d dbWrapper) GetKey(value []byte, path interface{}, mustExist bool) ([]byte, error) {
+func (d dbWrapper) GetKey(val, path interface{}, mustExist bool) ([]byte, error) {
 	p, err := resolveBucketPath(path)
 	if err != nil {
 		return nil, newErrBucketPathResolution("error")
 	}
 
-	return getKey(d.db, value, p, mustExist)
+	v, err := resolveRecord(val)
+	if err != nil {
+		return nil, newErrRecordResolution("value", val)
+	}
+
+	return getKey(d.db, v, p, mustExist)
 }
 
 func (d dbWrapper) GetFirstKeyAt(path interface{}, mustExist bool) ([]byte, error) {

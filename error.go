@@ -8,6 +8,7 @@ const (
 	errUnsupportedTypeMsg      = "is unsupported type"
 	errTimeoutMsg              = "timed out while"
 	errBucketPathResolutionMsg = "while resolving bucket path"
+	errRecordResolutionMsg     = "could not resolve"
 )
 
 // "could not locate X"
@@ -79,4 +80,19 @@ func (e ErrBucketPathResolution) Error() string {
 // what "while resolving bucket path"
 func newErrBucketPathResolution(what string) error {
 	return ErrBucketPathResolution{What: what}
+}
+
+// "could not resolve X of value Y"
+type ErrRecordResolution struct {
+	What  string
+	Value interface{}
+}
+
+func (e ErrRecordResolution) Error() string {
+	return fmt.Sprintf("%s %v", errRecordResolutionMsg, e.What)
+}
+
+// "could not resolve" what "of value" value
+func newErrRecordResolution(what string, value interface{}) error {
+	return ErrRecordResolution{What: what}
 }
