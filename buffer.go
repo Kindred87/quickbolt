@@ -23,8 +23,6 @@ import (
 //
 // If a timeout is not given, quickbolt's default timeout will be used instead.
 // See quickbolt/common.go
-//
-//	Because execution continues until the buffer is closed, consider the memory profile of the data being worked with.
 func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ctx *context.Context, timeoutLog *io.Writer, timeout ...time.Duration) error {
 	if buffer == nil {
 		return fmt.Errorf("input buffer is empty")
