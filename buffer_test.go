@@ -22,7 +22,7 @@ func TestCaptureBytes(t *testing.T) {
 		intoSlice  interface{}
 		buffer     chan []byte
 		mut        *sync.Mutex
-		ctx        *context.Context
+		ctx        context.Context
 		timeoutLog io.Writer
 		timeout    []time.Duration
 	}
@@ -82,7 +82,7 @@ func TestFilter(t *testing.T) {
 		in      chan []byte
 		out     chan []byte
 		allow   func([]byte) bool
-		ctx     *context.Context
+		ctx     context.Context
 		logger  io.Writer
 		timeout []time.Duration
 	}

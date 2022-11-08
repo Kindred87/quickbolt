@@ -22,7 +22,7 @@ import (
 //
 // If a timeout is not given, quickbolt's default timeout will be used instead.
 // See quickbolt/common.go
-func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ctx *context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
+func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ctx context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
 	if buffer == nil {
 		return fmt.Errorf("input buffer is empty")
 	} else if intoSlice == nil {
@@ -34,17 +34,16 @@ func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ct
 	}
 
 	if ctx == nil {
-		c := context.Background()
-		ctx = &c
+		ctx = context.Background()
 	}
 
 	for {
 		timer := time.NewTimer(timeout[0])
 
 		select {
-		case <-(*ctx).Done():
+		case <-ctx.Done():
 			timer.Stop()
-			return (*ctx).Err()
+			return ctx.Err()
 		case v, ok := <-buffer:
 			timer.Stop()
 
@@ -103,7 +102,7 @@ func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ct
 //
 // If a timeout is not given, quickbolt's default timeout will be used instead.
 // See quickbolt/common.go
-func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx *context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
+func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
 	defer close(out)
 
 	if in == nil {
@@ -119,16 +118,15 @@ func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx *conte
 	}
 
 	if ctx == nil {
-		c := context.Background()
-		ctx = &c
+		ctx = context.Background()
 	}
 
 	for {
 		timer := time.NewTimer(timeout[0])
 		select {
-		case <-(*ctx).Done():
+		case <-ctx.Done():
 			timer.Stop()
-			return (*ctx).Err()
+			return ctx.Err()
 		case v, ok := <-in:
 			timer.Stop()
 
@@ -172,7 +170,7 @@ func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx *conte
 //
 // If a timeout is not given, quickbolt's default timeout will be used instead.
 // See quickbolt/common.go
-func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out chan []byte, eg *errgroup.Group, ctx *context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
+func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out chan []byte, eg *errgroup.Group, ctx context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
 	defer close(out)
 
 	if in == nil {
@@ -182,21 +180,21 @@ func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out c
 	} else if out == nil {
 		return fmt.Errorf("output buffer is nil")
 	}
+
 	if timeout == nil {
 		timeout = []time.Duration{defaultBufferTimeout}
 	}
 
 	if ctx == nil {
-		c := context.Background()
-		ctx = &c
+		ctx = context.Background()
 	}
 
 	for {
 		timer := time.NewTimer(timeout[0])
 		select {
-		case <-(*ctx).Done():
+		case <-ctx.Done():
 			timer.Stop()
-			return (*ctx).Err()
+			return ctx.Err()
 		case v, ok := <-in:
 			timer.Stop()
 			if !ok {
