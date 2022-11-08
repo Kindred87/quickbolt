@@ -15,6 +15,7 @@ package main
 import (
     "log"
     "fmt"
+
     "github.com/Kindred87/quickbolt"
 )
 
@@ -37,5 +38,82 @@ func main() {
     }
 
     fmt.Printf("Got %s from db!\n", string(b))
+}
+```
+
+# Using buffer helpers
+
+``` go
+package main
+
+import (
+    "bytes"
+    "log"
+    "fmt"
+    "os"
+
+    "github.com/Kindred87/quickbolt"
+    "golang.org/x/sync/errgroup"
+)
+
+func main() {
+
+    db, err := quickbolt.Open("accounts.db")
+    if err != nil {
+        log.Fatalf("error while opening db: %s", err.Error())
+    }
+
+    defer db.Close()
+
+    var eg errgroup.Group
+
+	accountBuffer := make(chan []byte)
+	isClosedBuf := make(chan []byte)
+	captureBuf := make(chan []byte)
+
+    var closedAccounts []string
+
+    // Iterate over all accounts, which are at the root of this database
+	eg.Go(func() error { return db.BucketsAt([][]byte{}, true, accountBuffer) })
+
+    // Check each account if it is closed.  If so, pass it to the positive match buffer.
+	eg.Go(func() error {
+		return quickbolt.DoEach(accountBuffer, db, findClosedAccounts, isClosedBuf, 1000, nil, os.Stdout)
+	})
+
+    // Skip the Github account
+	eg.Go(func() error {
+		return quickbolt.Filter(isCLosedBuf, captureBuf, func(b []byte) bool {return !bytes.Equal([]byte("Github"), b)}, nil, os.Stdout)
+	})
+
+    // Capture accounts passed through filter into a string slice (closedAccounts).
+	eg.Go(func() error {
+		return quickbolt.CaptureBytes(&closedAccounts, captureBuf, nil, nil, os.Stdout) 
+	})
+
+    // Wait for work to finish.
+	if err := eg.Wait(); err != nil {
+		return log.Fatalf("error while running report workers: %s", err.Error())
+	}
+
+    // Print all the closed accounts.
+    for _, account := range closedAccounts {
+        fmt.Println(account)
+    }
+}
+
+// findClosedAccounts checks if the given account is closed.  If it is, the account is sent to the buffer.
+func findClosedAccounts(account []byte, buffer chan []byte, db quickbolt.DB) error {
+    v, err := db.GetValue("status", [][]byte{account}, true)
+    if err != nil {
+        return fmt.Errorf("error while getting status of account %s: %w", string(account), err)
+    }
+
+    if string(v) == "Closed" {
+        err := quickbolt.Send(buffer, account, nil, os.Stdout)
+        if err != nil {
+            return fmt.Errorf("error while sending account %s to buffer: %w", string(account), err)
+        }
+    }
 }
 ```
