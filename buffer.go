@@ -163,7 +163,7 @@ func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx *conte
 // DoEach executes the provided function on each value received from the input
 // buffer.
 //
-// Do is provided the out buffer and values received from the input buffer.
+// Do is provided the values received from the input buffer, output buffer, and database.
 //
 // Do is executed concurrently if eg is not nil.
 //
@@ -172,7 +172,7 @@ func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx *conte
 //
 // If a timeout is not given, quickbolt's default timeout will be used instead.
 // See quickbolt/common.go
-func DoEach(in chan []byte, do func([]byte, chan []byte) error, out chan []byte, eg *errgroup.Group, ctx *context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
+func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out chan []byte, eg *errgroup.Group, ctx *context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
 	defer close(out)
 
 	if in == nil {
@@ -204,7 +204,7 @@ func DoEach(in chan []byte, do func([]byte, chan []byte) error, out chan []byte,
 			}
 
 			if eg == nil {
-				err := do(v, out)
+				err := do(v, out, db)
 				if err != nil {
 					return fmt.Errorf("error while executing do func on value %s", string(v))
 				}
@@ -222,7 +222,7 @@ func DoEach(in chan []byte, do func([]byte, chan []byte) error, out chan []byte,
 					}
 					return err
 				default:
-					if eg.TryGo(func() error { return do(v, out) }) {
+					if eg.TryGo(func() error { return do(v, out, db) }) {
 						break goroutineSpawn
 					}
 				}
