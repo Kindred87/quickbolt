@@ -236,3 +236,42 @@ func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out c
 
 	}
 }
+
+// Send sends the given value to the given buffer.
+//
+// timeoutLog, if not nil, is written to if a buffer or concurrent operation
+// timeout occurs.
+//
+// If a timeout is not given, quickbolt's default timeout will be used instead.
+// See quickbolt/common.go
+func Send(buffer chan []byte, value []byte, ctx context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
+	if buffer == nil {
+		return fmt.Errorf("buffer is nil")
+	} else if value == nil {
+		return fmt.Errorf("value is nil")
+	}
+
+	if timeout == nil {
+		timeout = []time.Duration{defaultBufferTimeout}
+	}
+
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	timer := time.NewTimer(timeout[0])
+	select {
+	case <-ctx.Done():
+		timer.Stop()
+		return ctx.Err()
+	case buffer <- value:
+		timer.Stop()
+		return nil
+	case <-timer.C:
+		err := fmt.Errorf("buffer send for value %s timed out while waiting to send to buffer", string(value))
+		if timeoutLog != nil {
+			timeoutLog.Write([]byte(err.Error()))
+		}
+		return err
+	}
+}
