@@ -67,9 +67,9 @@ func main() {
 
     var eg errgroup.Group
 
-    accountBuffer := make(chan []byte)
-    isClosedBuf := make(chan []byte)
-    captureBuf := make(chan []byte)
+    accountBuffer := make(chan []byte, 5)
+    isClosedBuf := make(chan []byte, 5)
+    captureBuf := make(chan []byte, 5)
 
     var closedAccounts []string
 
