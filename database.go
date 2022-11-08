@@ -14,17 +14,15 @@ type DB interface {
 	// Upsert adds the key-value pair to the db at the given path.
 	// If the key is already present in the db, then the sum of the existing and given values via add() will be inserted instead.
 	//
-	// Key and val must be of type []byte, string, or int.
-	//
-	// Key and val must be of type []byte, string, or int.
+	// Key and value must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
 	// Buckets in the path are created if they do not already exist.
-	Upsert(key, val, bucketPath interface{}, add func(a, b []byte) ([]byte, error)) error
+	Upsert(key, value, bucketPath interface{}, add func(a, b []byte) ([]byte, error)) error
 	// Insert adds the given key-value pair to the db at the given path.
 	//
-	// Key and val must be of type []byte, string, or int.
+	// Key and value must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
@@ -32,20 +30,20 @@ type DB interface {
 	Insert(key, value, bucketPath interface{}) error
 	// Delete removes the key-value pair in the db at the given path.
 	//
-	// Key and val must be of type []byte, string, or int.
+	// Key must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	Delete(key, bucketPath interface{}) error
 	// DeleteValues removes all key-value pairs in the db at the given path where the value matches the one given.
 	//
-	// Key and val must be of type []byte, string, or int.
+	// Value must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	DeleteValues(value, bucketPath interface{}) error
 	// getValue returns the value paired with the given key.
 	// The returned value will be nil if the key could not be found.
 	//
-	// Key and val must be of type []byte, string, or int.
+	// Key must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
@@ -54,7 +52,7 @@ type DB interface {
 	// getKey returns the key paired with the given value.
 	// The returned value will be nil if the value could not be found.
 	//
-	// Key and val must be of type []byte, string, or int.
+	// Value must be of type []byte, string, or int.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
