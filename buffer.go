@@ -163,15 +163,20 @@ func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx contex
 //
 // Do is provided the values received from the input buffer, output buffer, and database.
 //
-// Do is executed concurrently if eg is not nil.
+// WorkLimit sets the limit of goroutines if >= 1.
 //
 // timeoutLog, if not nil, is written to if a buffer or concurrent operation
 // timeout occurs.
 //
 // If a timeout is not given, quickbolt's default timeout will be used instead.
 // See quickbolt/common.go
-func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out chan []byte, eg *errgroup.Group, ctx context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
+func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out chan []byte, workLimit int, ctx context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
 	defer close(out)
+
+	var eg errgroup.Group
+	if workLimit >= 1 {
+		eg.SetLimit(workLimit)
+	}
 
 	if in == nil {
 		return fmt.Errorf("input buffer is nil")
@@ -198,15 +203,7 @@ func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out c
 		case v, ok := <-in:
 			timer.Stop()
 			if !ok {
-				return nil
-			}
-
-			if eg == nil {
-				err := do(v, out, db)
-				if err != nil {
-					return fmt.Errorf("error while executing do func on value %s", string(v))
-				}
-				continue
+				return eg.Wait()
 			}
 
 		goroutineSpawn:
