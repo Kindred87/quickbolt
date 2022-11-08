@@ -14,8 +14,7 @@ import (
 // CaptureBytes appends values from the given buffer to the given slice.
 // The function executes until the buffer is closed.
 //
-// The following slice types are supported: *[]string, *[][]byte, *[]int,
-// *[]float32, *[]float64
+// The following slice types are supported: *[]string, *[][]byte, *[]int, *[]float32, *[]float64
 //
 // The mutex, if not nil, will be used during writes to the slice.
 //
