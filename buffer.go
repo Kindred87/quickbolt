@@ -87,7 +87,7 @@ func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ct
 		case <-timer.C:
 			err := newErrTimeout("byte captured", "waiting to receive from input buffer")
 			if timeoutLog != nil {
-				timeoutLog.Write([]byte(err.Error()))
+				timeoutLog.Write([]byte(err.Error() + "\n"))
 			}
 			return err
 		}
@@ -140,7 +140,7 @@ func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx contex
 				case <-timer.C:
 					err := newErrTimeout("buffer filtration", "waiting to send to output buffer")
 					if timeoutLog != nil {
-						timeoutLog.Write([]byte(err.Error()))
+						timeoutLog.Write([]byte(err.Error() + "\n"))
 					}
 					return err
 				}
@@ -148,7 +148,7 @@ func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx contex
 		case <-timer.C:
 			err := newErrTimeout("buffer filtration", "waiting to receive from input buffer")
 			if timeoutLog != nil {
-				timeoutLog.Write([]byte(err.Error()))
+				timeoutLog.Write([]byte(err.Error() + "\n"))
 			}
 			return err
 		}
@@ -209,7 +209,7 @@ func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out c
 				case <-timer.C:
 					err := newErrTimeout("do each execution", fmt.Sprintf("waiting to create new goroutine using %s", string(v)))
 					if timeoutLog != nil {
-						timeoutLog.Write([]byte(err.Error()))
+						timeoutLog.Write([]byte(err.Error() + "\n"))
 					}
 					return err
 				default:
@@ -222,7 +222,7 @@ func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out c
 		case <-timer.C:
 			err := newErrTimeout("do each execution", "waiting to receive from input buffer")
 			if timeoutLog != nil {
-				timeoutLog.Write([]byte(err.Error()))
+				timeoutLog.Write([]byte(err.Error() + "\n"))
 			}
 			return err
 		}
@@ -262,7 +262,7 @@ func Send(buffer chan []byte, value []byte, ctx context.Context, timeoutLog io.W
 	case <-timer.C:
 		err := newErrTimeout(fmt.Sprintf("buffer send for value %s", value), "waiting to send to buffer")
 		if timeoutLog != nil {
-			timeoutLog.Write([]byte(err.Error()))
+			timeoutLog.Write([]byte(err.Error() + "\n"))
 		}
 		return err
 	}
