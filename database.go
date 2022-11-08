@@ -11,8 +11,8 @@ import (
 )
 
 type DB interface {
-	// Upsert adds the key-value pair to the db at the given path.  If the key is already present in the
-	// db, then the sum of the existing and given values via add() will be inserted instead.
+	// Upsert adds the key-value pair to the db at the given path.
+	// If the key is already present in the db, then the sum of the existing and given values via add() will be inserted instead.
 	//
 	// Buckets in the path are created if they do not already exist.
 	Upsert(key []byte, val []byte, bucketPath []string, add func(a, b []byte) ([]byte, error)) error
@@ -22,25 +22,21 @@ type DB interface {
 	Insert(key, value []byte, bucketPath []string) error
 	// Delete removes the key-value pair in the db at the given path.
 	Delete(key []byte, bucketPath []string) error
-	// DeleteValues removes all key-value pairs in the db at the given path where the value
-	// matches the one given.
+	// DeleteValues removes all key-value pairs in the db at the given path where the value matches the one given.
 	DeleteValues(value []byte, bucketPath []string) error
-	// getValue returns the value paired with the given key.  The returned value will be nil
-	// if the key could not be found.
+	// getValue returns the value paired with the given key.
+	// The returned value will be nil if the key could not be found.
 	//
-	// If mustExist is true, an error will be returned if the key could not
-	// be found.
+	// If mustExist is true, an error will be returned if the key could not be found.
 	GetValue(key []byte, bucketPath []string, mustExist bool) ([]byte, error)
-	// getKey returns the key paired with the given value.  The returned value will be nil
-	// if the value could not be found.
+	// getKey returns the key paired with the given value.
+	// The returned value will be nil if the value could not be found.
 	//
-	// If mustExist is true, an error will be returned if the value could not
-	// be found.
+	// If mustExist is true, an error will be returned if the value could not be found.
 	GetKey(value []byte, bucketPath []string, mustExist bool) ([]byte, error)
 	// getFirstKeyAt returns the first key at the given path.
 	//
-	// If mustExist is true, an error will be returned if the key could not
-	// be found.
+	// If mustExist is true, an error will be returned if the key could not be found.
 	GetFirstKeyAt(bucketPath []string, mustExist bool) ([]byte, error)
 	// ValuesAt returns the values for all the keys at the given path.
 	ValuesAt(bucketPath []string, mustExist bool, buffer chan []byte) error
@@ -68,8 +64,7 @@ type DB interface {
 	Path() string
 	// RootBucket returns the root bucket's identifier.
 	RootBucket() []byte
-	// AddLog provides a writer interface through which quickbolt will log
-	// buffer related errors via zerolog.
+	// AddLog provides a writer interface through which quickbolt will log buffer related errors via zerolog.
 	//
 	// The default log output is os.Stdout.
 	AddLog(io.Writer)
@@ -79,8 +74,7 @@ type DB interface {
 	SetBufferTimeout(time.Duration)
 }
 
-// Create generates a database with the given filename and returns a DB
-// interface encapsulating the database.
+// Create generates a database with the given filename and returns a DB interface encapsulating the database.
 //
 // If the dir parameter is provided, the database will be created there.
 // Otherwise, the database will be created in the executable's directory.
@@ -115,8 +109,7 @@ func new(path string) (DB, error) {
 	return &db, nil
 }
 
-// Open opens a database with the given filename and returns a DB
-// interface encapsulating the database.
+// Open opens a database with the given filename and returns a DB interface encapsulating the database.
 //
 // If the dir parameter is provided, the database will be opened there.
 // Otherwise, the database will be opened in the executable's directory.

@@ -8,11 +8,10 @@ import (
 	"go.etcd.io/bbolt"
 )
 
-// getValue returns the value paired with the given key.  The returned value will be nil
-// if the key could not be found.
+// getValue returns the value paired with the given key.
+// The returned value will be nil if the key could not be found.
 //
-// If mustExist is true, an error will be returned if the key could not
-// be found.
+// If mustExist is true, an error will be returned if the key could not be found.
 func getValue(db *bbolt.DB, key []byte, path []string, mustExist bool) ([]byte, error) {
 	if db == nil {
 		return nil, fmt.Errorf("db is nil")
@@ -101,8 +100,7 @@ func getBucket(tx *bbolt.Tx, path []string, mustExist bool) (*bbolt.Bucket, erro
 
 // getFirstKeyAt returns the first key at the given path.
 //
-// If mustExist is true, an error will be returned if the key could not
-// be found.
+// If mustExist is true, an error will be returned if the key could not be found.
 func getFirstKeyAt(db *bbolt.DB, path []string, mustExist bool) ([]byte, error) {
 	var key []byte
 

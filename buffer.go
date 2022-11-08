@@ -20,8 +20,7 @@ import (
 //
 // timeoutLog, if not nil, is written to if a buffer operation timeout occurs.
 //
-// If a timeout is not given, quickbolt's default timeout will be used instead.
-// See quickbolt/common.go
+// If a timeout is not given, quickbolt's default timeout will be used instead. See quickbolt/common.go
 func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ctx context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
 	if buffer == nil {
 		return fmt.Errorf("input buffer is empty")
@@ -95,8 +94,7 @@ func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ct
 	}
 }
 
-// Filter passes allowed values between two buffers until the input buffer is
-// closed.
+// Filter passes allowed values between two buffers until the input buffer is closed.
 //
 // timeoutLog, if not nil, is written to if a buffer operation timeout occurs.
 //
@@ -158,15 +156,13 @@ func Filter(in chan []byte, out chan []byte, allow func([]byte) bool, ctx contex
 	}
 }
 
-// DoEach executes the provided function on each value received from the input
-// buffer.
+// DoEach executes the provided function on each value received from the input buffer.
 //
 // Do is provided the values received from the input buffer, output buffer, and database.
 //
 // WorkLimit sets the limit of goroutines if >= 1.
 //
-// timeoutLog, if not nil, is written to if a buffer or concurrent operation
-// timeout occurs.
+// timeoutLog, if not nil, is written to if a buffer or concurrent operation timeout occurs.
 //
 // If a timeout is not given, quickbolt's default timeout will be used instead.
 // See quickbolt/common.go
@@ -236,8 +232,7 @@ func DoEach(in chan []byte, db DB, do func([]byte, chan []byte, DB) error, out c
 
 // Send sends the given value to the given buffer.
 //
-// timeoutLog, if not nil, is written to if a buffer or concurrent operation
-// timeout occurs.
+// timeoutLog, if not nil, is written to if a buffer or concurrent operation timeout occurs.
 //
 // If a timeout is not given, quickbolt's default timeout will be used instead.
 // See quickbolt/common.go

@@ -7,8 +7,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-// upsert adds the key-value pair to the db at the given path.  If the key is already present in the
-// db, then the sum of the existing and given values will be added to the db instead.
+// upsert adds the key-value pair to the db at the given path.
+// If the key is already present in the db, then the sum of the existing and given values will be added to the db instead.
 func upsert(db *bbolt.DB, key []byte, val []byte, path []string, add func(a, b []byte) ([]byte, error)) error {
 	err := db.Batch(func(tx *bbolt.Tx) error {
 		bkt, err := getCreateBucket(tx, path)
@@ -100,8 +100,7 @@ func delete(db *bbolt.DB, key []byte, path []string) error {
 	return nil
 }
 
-// deleteValues removes all key-value pairs in the db at the given path where the value
-// matches the one given.
+// deleteValues removes all key-value pairs in the db at the given path where the value matches the one given.
 func deleteValues(db *bbolt.DB, value []byte, path []string) error {
 	if db == nil {
 		return fmt.Errorf("db is nil")
