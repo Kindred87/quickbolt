@@ -92,9 +92,9 @@ func main() {
     })
 
     // Wait for work to finish.
-	if err := eg.Wait(); err != nil {
-		return log.Fatalf("error while running report workers: %s", err.Error())
-	}
+    if err := eg.Wait(); err != nil {
+        return log.Fatalf("error while running report workers: %s", err.Error())
+    }
 
     // Print all the closed accounts.
     for _, account := range closedAccounts {
