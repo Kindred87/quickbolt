@@ -82,6 +82,29 @@ func insert(db *bbolt.DB, key, value []byte, path [][]byte) error {
 	return nil
 }
 
+// insertBucket creates a bucket of the given key at the given path.
+func insertBucket(db *bbolt.DB, key []byte, path [][]byte) error {
+	err := db.Batch(func(tx *bbolt.Tx) error {
+		bkt, err := getCreateBucket(tx, path)
+		if err != nil {
+			return fmt.Errorf("error while navigating path: %w", err)
+		}
+
+		_, err = bkt.CreateBucket(key)
+		if err != nil {
+			return fmt.Errorf("error while creating bucket: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("error while writing bucket %s to db: %w", key, err)
+	}
+
+	return nil
+}
+
 // delete removes the key-value pair in the db at the given path.
 func delete(db *bbolt.DB, key []byte, path [][]byte) error {
 	err := db.Batch(func(tx *bbolt.Tx) error {

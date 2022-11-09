@@ -11,7 +11,7 @@ import (
 )
 
 type DB interface {
-	// Upsert adds the key-value pair to the db at the given path.
+	// Upsert writes the key-value pair to the db at the given path.
 	// If the key is already present in the db, then the sum of the existing and given values via add() will be inserted instead.
 	//
 	// Key and value must be of type []byte, string, or int.
@@ -20,7 +20,7 @@ type DB interface {
 	//
 	// Buckets in the path are created if they do not already exist.
 	Upsert(key, value, bucketPath interface{}, add func(a, b []byte) ([]byte, error)) error
-	// Insert adds the given key-value pair to the db at the given path.
+	// Insert writes the given key-value pair to the db at the given path.
 	//
 	// Key and value must be of type []byte, string, or int.
 	//
@@ -28,6 +28,14 @@ type DB interface {
 	//
 	// Buckets in the path are created if they do not already exist.
 	Insert(key, value, bucketPath interface{}) error
+	// InsertBucket creates a bucket of the given key in the db at the given path.
+	//
+	// Key must be of type []byte, string, or int.
+	//
+	// BucketPath must be of type []string or [][]byte.
+	//
+	// Buckets in the path are created uf they do not already exist.
+	InsertBucket(key, bucketPath interface{}) error
 	// Delete removes the key-value pair in the db at the given path.
 	//
 	// Key must be of type []byte, string, or int.
@@ -216,6 +224,20 @@ func (d dbWrapper) Insert(key, val, path interface{}) error {
 	}
 
 	return insert(d.db, k, v, p)
+}
+
+func (d dbWrapper) InsertBucket(key, path interface{}) error {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return newErrBucketPathResolution("error")
+	}
+
+	k, err := resolveRecord(key)
+	if err != nil {
+		return newErrRecordResolution("key", key)
+	}
+
+	return insertBucket(d.db, k, p)
 }
 
 func (d dbWrapper) Delete(key, path interface{}) error {
