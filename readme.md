@@ -73,7 +73,7 @@ func main() {
 
     var closedAccounts []string
 
-    // Iterate over all accounts, which are at the root of this database
+    // Iterate over all accounts, which are at the root of this database.
     eg.Go(func() error { return db.BucketsAt([][]byte{}, true, accountBuffer) })
 
     // Check each account if it is closed.  If so, pass it to the positive match buffer.
@@ -81,7 +81,7 @@ func main() {
         return quickbolt.DoEach(accountBuffer, db, findClosedAccounts, isClosedBuf, 1000, nil, os.Stdout)
     })
 
-    // Skip the Github account
+    // Skip the Github account.
     eg.Go(func() error {
         return quickbolt.Filter(isCLosedBuf, captureBuf, func(b []byte) bool {return !bytes.Equal([]byte("Github"), b)}, nil, os.Stdout)
     })
