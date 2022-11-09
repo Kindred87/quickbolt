@@ -29,7 +29,7 @@ type DB interface {
 	// Buckets in the path are created if they do not already exist.
 	Insert(key, value, bucketPath interface{}) error
 	// InsertValue writes the given value to the db at the given path using an automatically generated key.
-	// Note that the key will be an endian-specific uint64 value.
+	// Note that the key will be an endian-specific uint64 value.  You may use the PerEndian helper function to assist your byte conversions.
 	//
 	// Value must be of type []byte, string, int, or uint64.
 	//

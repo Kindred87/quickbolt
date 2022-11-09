@@ -14,7 +14,7 @@ func Test_insertValue(t *testing.T) {
 	defer os.Remove(db.Path())
 	defer db.Close()
 
-	uintOne, err := toBytes(uint64(1))
+	uintOne, err := PerEndian(uint64(1))
 	assert.Nil(t, err)
 
 	type args struct {

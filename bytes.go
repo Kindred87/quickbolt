@@ -44,7 +44,7 @@ func resolveRecord(r interface{}) ([]byte, error) {
 	case int:
 		resolved = []byte(strconv.Itoa(record))
 	case uint64:
-		t, err := toBytes(record)
+		t, err := PerEndian(record)
 		if err != nil {
 			return nil, fmt.Errorf("error while resolving %d: %w", record, err)
 		}

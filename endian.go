@@ -21,7 +21,8 @@ func getEndianType() (binary.ByteOrder, error) {
 	}
 }
 
-func toBytes(u uint64) ([]byte, error) {
+// PerEndian converts the given unsigned integer to a byte slice arranged in accordance with the endian type of the host system.
+func PerEndian(u uint64) ([]byte, error) {
 	buf := make([]byte, 8)
 
 	eType, err := getEndianType()
