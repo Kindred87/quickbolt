@@ -43,6 +43,12 @@ func resolveRecord(r interface{}) ([]byte, error) {
 		resolved = []byte(record)
 	case int:
 		resolved = []byte(strconv.Itoa(record))
+	case uint64:
+		t, err := toBytes(record)
+		if err != nil {
+			return nil, fmt.Errorf("error while resolving %d: %w", record, err)
+		}
+		resolved = t
 	default:
 		return nil, newErrUnsupportedType("record")
 	}

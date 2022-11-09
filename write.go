@@ -82,6 +82,36 @@ func insert(db *bbolt.DB, key, value []byte, path [][]byte) error {
 	return nil
 }
 
+// insertValue writes the given value to the db at the given path using an auto-generated key.
+func insertValue(db *bbolt.DB, value []byte, path [][]byte) error {
+	err := db.Batch(func(tx *bbolt.Tx) error {
+		bkt, err := getCreateBucket(tx, path)
+		if err != nil {
+			return fmt.Errorf("error while navigating path: %w", err)
+		}
+
+		k, _ := bkt.NextSequence()
+
+		key, err := toBytes(k)
+		if err != nil {
+			return fmt.Errorf("error while converting key to bytes: %w", err)
+		}
+
+		err = bkt.Put(key, value)
+		if err != nil {
+			return fmt.Errorf("error while writing: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return fmt.Errorf("error while writing %#v to db: %w", value, err)
+	}
+
+	return nil
+}
+
 // insertBucket creates a bucket of the given key at the given path.
 func insertBucket(db *bbolt.DB, key []byte, path [][]byte) error {
 	err := db.Batch(func(tx *bbolt.Tx) error {

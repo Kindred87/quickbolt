@@ -14,7 +14,7 @@ type DB interface {
 	// Upsert writes the key-value pair to the db at the given path.
 	// If the key is already present in the db, then the sum of the existing and given values via add() will be inserted instead.
 	//
-	// Key and value must be of type []byte, string, or int.
+	// Key and value must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
@@ -22,15 +22,24 @@ type DB interface {
 	Upsert(key, value, bucketPath interface{}, add func(a, b []byte) ([]byte, error)) error
 	// Insert writes the given key-value pair to the db at the given path.
 	//
-	// Key and value must be of type []byte, string, or int.
+	// Key and value must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
 	// Buckets in the path are created if they do not already exist.
 	Insert(key, value, bucketPath interface{}) error
+	// InsertValue writes the given value to the db at the given path using an automatically generated key.
+	// Note that the key will be an endian-specific uint64 value.
+	//
+	// Value must be of type []byte, string, int, or uint64.
+	//
+	// BucketPath must be of type []string or [][]byte.
+	//
+	// Buckets in the path are created if they do not already exist.
+	InsertValue(value, bucketPath interface{}) error
 	// InsertBucket creates a bucket of the given key in the db at the given path.
 	//
-	// Key must be of type []byte, string, or int.
+	// Key must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
@@ -38,20 +47,20 @@ type DB interface {
 	InsertBucket(key, bucketPath interface{}) error
 	// Delete removes the key-value pair in the db at the given path.
 	//
-	// Key must be of type []byte, string, or int.
+	// Key must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	Delete(key, bucketPath interface{}) error
 	// DeleteValues removes all key-value pairs in the db at the given path where the value matches the one given.
 	//
-	// Value must be of type []byte, string, or int.
+	// Value must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	DeleteValues(value, bucketPath interface{}) error
 	// getValue returns the value paired with the given key.
 	// The returned value will be nil if the key could not be found.
 	//
-	// Key must be of type []byte, string, or int.
+	// Key must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
@@ -60,7 +69,7 @@ type DB interface {
 	// getKey returns the key paired with the given value.
 	// The returned value will be nil if the value could not be found.
 	//
-	// Value must be of type []byte, string, or int.
+	// Value must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
@@ -68,7 +77,7 @@ type DB interface {
 	GetKey(value, bucketPath interface{}, mustExist bool) ([]byte, error)
 	// getFirstKeyAt returns the first key at the given path.
 	//
-	// Key and val must be of type []byte, string, or int.
+	// Key and val must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
@@ -76,25 +85,25 @@ type DB interface {
 	GetFirstKeyAt(bucketPath interface{}, mustExist bool) ([]byte, error)
 	// ValuesAt returns the values for all the keys at the given path.
 	//
-	// Key and val must be of type []byte, string, or int.
+	// Key and val must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	ValuesAt(bucketPath interface{}, mustExist bool, buffer chan []byte) error
 	// KeysAt returns the keys at the given path.
 	//
-	// Key and val must be of type []byte, string, or int.
+	// Key and val must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	KeysAt(bucketPath interface{}, mustExist bool, buffer chan []byte) error
 	// EntriesAt returns the key-value pairs at the given path.
 	//
-	// Key and val must be of type []byte, string, or int.
+	// Key and val must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	EntriesAt(bucketPath interface{}, mustExist bool, buffer chan [2][]byte) error
 	// BucketsAt returns the buckets at the given path.
 	//
-	// Key and val must be of type []byte, string, or int.
+	// Key and val must be of type []byte, string, int, or uint64.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	BucketsAt(bucketPath interface{}, mustExist bool, buffer chan []byte) error
@@ -224,6 +233,20 @@ func (d dbWrapper) Insert(key, val, path interface{}) error {
 	}
 
 	return insert(d.db, k, v, p)
+}
+
+func (d dbWrapper) InsertValue(val, path interface{}) error {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		return newErrBucketPathResolution("error")
+	}
+
+	v, err := resolveRecord(val)
+	if err != nil {
+		return newErrRecordResolution("value", val)
+	}
+
+	return insertValue(d.db, v, p)
 }
 
 func (d dbWrapper) InsertBucket(key, path interface{}) error {
