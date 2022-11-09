@@ -81,7 +81,7 @@ func main() {
         return quickbolt.DoEach(accountBuffer, db, findClosedAccounts, isClosedBuf, 1000, nil, os.Stdout)
     })
 
-    // Skip the Github account.
+    // Filter the Github account from the closed account buffer.
     eg.Go(func() error {
         return quickbolt.Filter(isCLosedBuf, captureBuf, func(b []byte) bool {return !bytes.Equal([]byte("Github"), b)}, nil, os.Stdout)
     })
