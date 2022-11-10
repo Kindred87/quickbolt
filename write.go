@@ -34,7 +34,7 @@ func upsert(db *bbolt.DB, key []byte, val []byte, path [][]byte, add func(a, b [
 	})
 
 	if err != nil {
-		return fmt.Errorf("error while writing %#v and %#v to db: %w", key, val, err)
+		return fmt.Errorf("error while writing %s and %s to db: %w", string(key), string(val), err)
 	}
 
 	return nil
@@ -76,7 +76,7 @@ func insert(db *bbolt.DB, key, value []byte, path [][]byte) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("error while writing %#v and %#v to db: %w", key, value, err)
+		return fmt.Errorf("error while writing %s and %s to db: %w", string(key), string(value), err)
 	}
 
 	return nil
@@ -106,7 +106,7 @@ func insertValue(db *bbolt.DB, value []byte, path [][]byte) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("error while writing %#v to db: %w", value, err)
+		return fmt.Errorf("error while writing %s to db: %w", string(value), err)
 	}
 
 	return nil
@@ -129,7 +129,7 @@ func insertBucket(db *bbolt.DB, key []byte, path [][]byte) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("error while writing bucket %s to db: %w", key, err)
+		return fmt.Errorf("error while writing bucket %s to db: %w", string(key), err)
 	}
 
 	return nil
@@ -147,7 +147,7 @@ func delete(db *bbolt.DB, key []byte, path [][]byte) error {
 	})
 
 	if err != nil {
-		return fmt.Errorf("error while deleting %v from db: %w", key, err)
+		return fmt.Errorf("error while deleting %s from db: %w", string(key), err)
 	}
 
 	return nil
@@ -177,7 +177,7 @@ func deleteValues(db *bbolt.DB, value []byte, path [][]byte) error {
 
 		if slices.Equal(v, value) {
 			if err := c.Delete(); err != nil {
-				return fmt.Errorf("error while deleting key %#v: %w", k, err)
+				return fmt.Errorf("error while deleting key %s: %w", string(k), err)
 			}
 		}
 	}
