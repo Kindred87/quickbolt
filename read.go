@@ -143,6 +143,9 @@ func valuesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, d
 	if db == nil {
 		c := withCallerInfo(fmt.Sprintf("value iteration at %s", path), 3)
 		return fmt.Errorf("%s received nil db", c)
+	} else if buffer == nil {
+		c := withCallerInfo(fmt.Sprintf("value iteration at %s", path), 3)
+		return fmt.Errorf("%s received nil channel", c)
 	}
 
 	var values [][]byte
