@@ -198,17 +198,20 @@ type dbWrapper struct {
 func (d dbWrapper) Upsert(key, val, path any, add func(a, b []byte) ([]byte, error)) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return newErrBucketPathResolution("error")
+		c := withCallerInfo("value upsert", 2)
+		return fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	k, err := resolveRecord(key)
 	if err != nil {
-		return newErrRecordResolution("key", key)
+		c := withCallerInfo("value upsert", 2)
+		return fmt.Errorf("%s %w", c, newErrRecordResolution("key", key))
 	}
 
 	v, err := resolveRecord(val)
 	if err != nil {
-		return newErrRecordResolution("value", val)
+		c := withCallerInfo("value upsert", 2)
+		return fmt.Errorf("%s %w", c, newErrRecordResolution("value", val))
 	}
 
 	return upsert(d.db, k, v, p, add)
@@ -217,17 +220,20 @@ func (d dbWrapper) Upsert(key, val, path any, add func(a, b []byte) ([]byte, err
 func (d dbWrapper) Insert(key, val, path any) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return newErrBucketPathResolution("error")
+		c := withCallerInfo("key-value insertion", 2)
+		return fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	k, err := resolveRecord(key)
 	if err != nil {
-		return newErrRecordResolution("key", key)
+		c := withCallerInfo("key-value insertion", 2)
+		return fmt.Errorf("%s %w", c, newErrRecordResolution("key", key))
 	}
 
 	v, err := resolveRecord(val)
 	if err != nil {
-		return newErrRecordResolution("value", val)
+		c := withCallerInfo("key-value insertion", 2)
+		return fmt.Errorf("%s %w", c, newErrRecordResolution("value", val))
 	}
 
 	return insert(d.db, k, v, p)
@@ -236,12 +242,14 @@ func (d dbWrapper) Insert(key, val, path any) error {
 func (d dbWrapper) InsertValue(val, path any) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return newErrBucketPathResolution("error")
+		c := withCallerInfo("value insertion", 2)
+		return fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	v, err := resolveRecord(val)
 	if err != nil {
-		return newErrRecordResolution("value", val)
+		c := withCallerInfo("value insertion", 2)
+		return fmt.Errorf("%s %w", c, newErrRecordResolution("value", val))
 	}
 
 	return insertValue(d.db, v, p)
@@ -250,12 +258,14 @@ func (d dbWrapper) InsertValue(val, path any) error {
 func (d dbWrapper) InsertBucket(key, path any) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return newErrBucketPathResolution("error")
+		c := withCallerInfo("bucket insertion", 2)
+		return fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	k, err := resolveRecord(key)
 	if err != nil {
-		return newErrRecordResolution("key", key)
+		c := withCallerInfo("bucket insertion", 2)
+		return fmt.Errorf("%s %w", c, newErrRecordResolution("key", key))
 	}
 
 	return insertBucket(d.db, k, p)
@@ -264,12 +274,14 @@ func (d dbWrapper) InsertBucket(key, path any) error {
 func (d dbWrapper) Delete(key, path any) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return newErrBucketPathResolution("error")
+		c := withCallerInfo("key-value deletion", 2)
+		return fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	k, err := resolveRecord(key)
 	if err != nil {
-		return newErrRecordResolution("key", key)
+		c := withCallerInfo("key-value deletion", 2)
+		return fmt.Errorf("%s %w", c, newErrRecordResolution("key", key))
 	}
 
 	return delete(d.db, k, p)
@@ -278,12 +290,14 @@ func (d dbWrapper) Delete(key, path any) error {
 func (d dbWrapper) DeleteValues(val, path any) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return newErrBucketPathResolution("error")
+		c := withCallerInfo("value deletion", 2)
+		return fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	v, err := resolveRecord(val)
 	if err != nil {
-		return newErrRecordResolution("value", val)
+		c := withCallerInfo("value deletion", 2)
+		return fmt.Errorf("%s %w", c, newErrRecordResolution("value", val))
 	}
 
 	return deleteValues(d.db, v, p)
@@ -292,12 +306,14 @@ func (d dbWrapper) DeleteValues(val, path any) error {
 func (d dbWrapper) GetValue(key, path any, mustExist bool) ([]byte, error) {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return nil, newErrBucketPathResolution("error")
+		c := withCallerInfo("value retrieval", 2)
+		return nil, fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	k, err := resolveRecord(key)
 	if err != nil {
-		return nil, newErrRecordResolution("key", key)
+		c := withCallerInfo("value retrieval", 2)
+		return nil, fmt.Errorf("%s %w", c, newErrRecordResolution("key", key))
 	}
 
 	return getValue(d.db, k, p, mustExist)
@@ -306,12 +322,14 @@ func (d dbWrapper) GetValue(key, path any, mustExist bool) ([]byte, error) {
 func (d dbWrapper) GetKey(val, path any, mustExist bool) ([]byte, error) {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return nil, newErrBucketPathResolution("error")
+		c := withCallerInfo("key retrieval", 2)
+		return nil, fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	v, err := resolveRecord(val)
 	if err != nil {
-		return nil, newErrRecordResolution("value", val)
+		c := withCallerInfo("key retrieval", 2)
+		return nil, fmt.Errorf("%s %w", c, newErrRecordResolution("value", val))
 	}
 
 	return getKey(d.db, v, p, mustExist)
@@ -320,7 +338,8 @@ func (d dbWrapper) GetKey(val, path any, mustExist bool) ([]byte, error) {
 func (d dbWrapper) GetFirstKeyAt(path any, mustExist bool) ([]byte, error) {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return nil, newErrBucketPathResolution("error")
+		c := withCallerInfo(fmt.Sprintf("first key retrieval in %s", path), 2)
+		return nil, fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	return getFirstKeyAt(d.db, p, mustExist)
@@ -329,8 +348,8 @@ func (d dbWrapper) GetFirstKeyAt(path any, mustExist bool) ([]byte, error) {
 func (d dbWrapper) ValuesAt(path any, mustExist bool, buffer chan []byte) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		c := withCallerInfo("value iteration", 2)
-		return newErrBucketPathResolution(fmt.Sprintf("%s experienced an error", c))
+		c := withCallerInfo(fmt.Sprintf("value iteration in %s", path), 2)
+		return fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	return valuesAt(d.db, p, mustExist, buffer, d)
@@ -339,7 +358,8 @@ func (d dbWrapper) ValuesAt(path any, mustExist bool, buffer chan []byte) error 
 func (d dbWrapper) KeysAt(path any, mustExist bool, buffer chan []byte) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return newErrBucketPathResolution("error")
+		c := withCallerInfo(fmt.Sprintf("key iteration in %s", path), 2)
+		return fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	return keysAt(d.db, p, mustExist, buffer, d)
@@ -348,7 +368,8 @@ func (d dbWrapper) KeysAt(path any, mustExist bool, buffer chan []byte) error {
 func (d dbWrapper) EntriesAt(path any, mustExist bool, buffer chan [2][]byte) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return newErrBucketPathResolution("error")
+		c := withCallerInfo(fmt.Sprintf("key-value iteration in %s", path), 2)
+		return fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	return entriesAt(d.db, p, mustExist, buffer, d)
@@ -357,7 +378,8 @@ func (d dbWrapper) EntriesAt(path any, mustExist bool, buffer chan [2][]byte) er
 func (d dbWrapper) BucketsAt(path any, mustExist bool, buffer chan []byte) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return newErrBucketPathResolution("error")
+		c := withCallerInfo(fmt.Sprintf("bucket iteration in %s", path), 2)
+		return fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
 	}
 
 	return bucketsAt(d.db, p, mustExist, buffer, d)
