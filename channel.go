@@ -324,7 +324,7 @@ func DoEach[T any](in chan T, db DB, do func(T, chan T, DB) error, out chan T, w
 		return fmt.Errorf("%s received nil input channel", c)
 	} else if do == nil {
 		c := withCallerInfo("channel do each", 2)
-		return fmt.Errorf("received nil do func", c)
+		return fmt.Errorf("%s received nil do func", c)
 	} else if out == nil {
 		c := withCallerInfo("channel do each", 2)
 		return fmt.Errorf("%s received nil output channel", c)
