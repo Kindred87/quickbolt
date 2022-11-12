@@ -77,8 +77,6 @@ type DB interface {
 	GetKey(value, bucketPath interface{}, mustExist bool) ([]byte, error)
 	// getFirstKeyAt returns the first key at the given path.
 	//
-	// Key and val must be of type []byte, string, int, or uint64.
-	//
 	// BucketPath must be of type []string or [][]byte.
 	//
 	// If mustExist is true, an error will be returned if the key could not be found.
@@ -331,7 +329,8 @@ func (d dbWrapper) GetFirstKeyAt(path interface{}, mustExist bool) ([]byte, erro
 func (d dbWrapper) ValuesAt(path interface{}, mustExist bool, buffer chan []byte) error {
 	p, err := resolveBucketPath(path)
 	if err != nil {
-		return newErrBucketPathResolution("error")
+		c := withCallerInfo("value iteration", 2)
+		return newErrBucketPathResolution(fmt.Sprintf("%s experienced an error", c))
 	}
 
 	return valuesAt(d.db, p, mustExist, buffer, d)
