@@ -153,8 +153,6 @@ func Capture[T any](into *[]T, buffer chan T, mut *sync.Mutex, ctx context.Conte
 
 // Filter passes allowed values between two channels until the input channel is closed.
 //
-// If the allow function is nil, all values are considered allowed.
-//
 // timeoutLog, if not nil, is written to if a channel operation timeout occurs.
 //
 // If a timeout is not given, quickbolt's default timeout will be used instead.
