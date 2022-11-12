@@ -95,6 +95,7 @@ func TestFilter(t *testing.T) {
 	}{
 		{name: "Basic", args: args{in: make(chan []byte), out: make(chan []byte), allow: func(b []byte) bool { return bytes.Equal(b, []byte("foo")) }, logger: os.Stdout}, send: []byte("foo"), wantSent: true, wantErr: false},
 		{name: "Filter out", args: args{in: make(chan []byte), out: make(chan []byte), allow: func(b []byte) bool { return bytes.Equal(b, []byte("foo")) }}, send: []byte("dark foo"), wantSent: false, wantErr: false},
+		{name: "empty out", args: args{in: make(chan []byte)}, wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -104,16 +105,18 @@ func TestFilter(t *testing.T) {
 			send := tt.send
 			name := tt.name
 			eg.Go(func() error {
-				defer close(in)
-
-				timer := time.NewTimer(time.Millisecond * 10)
-				select {
-				case in <- send:
-					timer.Stop()
-					return nil
-				case <-timer.C:
-					return fmt.Errorf("goroutine sending %s to input buffer to test %s timed out", string(send), name)
+				if in != nil {
+					defer close(in)
 				}
+
+				err := Send(in, send, nil, tt.args.logger, time.Millisecond*10)
+				if tt.wantErr && assert.NotNil(t, err) {
+					return nil
+				} else {
+					assert.Nil(t, err)
+				}
+
+				return err
 			})
 
 			out := tt.args.out
