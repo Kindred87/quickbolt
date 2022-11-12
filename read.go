@@ -14,7 +14,8 @@ import (
 // If mustExist is true, an error will be returned if the key could not be found.
 func getValue(db *bbolt.DB, key []byte, path [][]byte, mustExist bool) ([]byte, error) {
 	if db == nil {
-		return nil, fmt.Errorf("db is nil")
+		c := withCallerInfo(fmt.Sprintf("value retrieval for %s", key), 3)
+		return nil, fmt.Errorf("%s received nil db", c)
 	}
 
 	var value []byte
@@ -36,14 +37,16 @@ func getValue(db *bbolt.DB, key []byte, path [][]byte, mustExist bool) ([]byte, 
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("error while reading value paired with key %s: %w", string(key), err)
+		c := withCallerInfo(fmt.Sprintf("value retrieval for %s", key), 3)
+		return nil, fmt.Errorf("%s experienced error while reading value: %w", c, err)
 	}
 	return value, nil
 }
 
 func getKey(db *bbolt.DB, value []byte, path [][]byte, mustExist bool) ([]byte, error) {
 	if db == nil {
-		return nil, fmt.Errorf("db is nil")
+		c := withCallerInfo(fmt.Sprintf("key retrieval for %s", value), 3)
+		return nil, fmt.Errorf("%s received nil db", c)
 	}
 
 	var key []byte
@@ -73,7 +76,8 @@ func getKey(db *bbolt.DB, value []byte, path [][]byte, mustExist bool) ([]byte, 
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("error while reading value paired with key %s: %w", string(key), err)
+		c := withCallerInfo(fmt.Sprintf("key retrieval for %s", value), 3)
+		return nil, fmt.Errorf("%s experienced error while getting value: %w", c, err)
 	}
 	return key, nil
 }
@@ -81,7 +85,7 @@ func getKey(db *bbolt.DB, value []byte, path [][]byte, mustExist bool) ([]byte, 
 func getBucket(tx *bbolt.Tx, path [][]byte, mustExist bool) (*bbolt.Bucket, error) {
 	bkt := tx.Bucket([]byte(rootBucket))
 	if bkt == nil && mustExist {
-		return nil, newErrAccess(fmt.Sprintf("%s in %#v", path[0], path))
+		return nil, newErrAccess(fmt.Sprintf("%s in %s", path[0], path))
 	} else if bkt == nil {
 		return nil, nil
 	}
@@ -89,7 +93,7 @@ func getBucket(tx *bbolt.Tx, path [][]byte, mustExist bool) (*bbolt.Bucket, erro
 	for _, p := range path {
 		bkt = bkt.Bucket(p)
 		if bkt == nil && mustExist {
-			return nil, newErrAccess(fmt.Sprintf("%s in %#v", p, path))
+			return nil, newErrAccess(fmt.Sprintf("%s in %s", p, path))
 		} else if bkt == nil {
 			return nil, nil
 		}
@@ -102,6 +106,11 @@ func getBucket(tx *bbolt.Tx, path [][]byte, mustExist bool) (*bbolt.Bucket, erro
 //
 // If mustExist is true, an error will be returned if the key could not be found.
 func getFirstKeyAt(db *bbolt.DB, path [][]byte, mustExist bool) ([]byte, error) {
+	if db == nil {
+		c := withCallerInfo(fmt.Sprintf("first key retrieval for %s", path), 3)
+		return nil, fmt.Errorf("%s received nil db", c)
+	}
+
 	var key []byte
 
 	err := db.View(func(tx *bbolt.Tx) error {
@@ -123,7 +132,8 @@ func getFirstKeyAt(db *bbolt.DB, path [][]byte, mustExist bool) ([]byte, error) 
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("error while scanning keys at %#v: %w", path, err)
+		c := withCallerInfo(fmt.Sprintf("first key retrieval for %s", path), 3)
+		return nil, fmt.Errorf("%s experienced error while scanning keys: %w", c, err)
 	}
 
 	return key, nil
@@ -131,7 +141,8 @@ func getFirstKeyAt(db *bbolt.DB, path [][]byte, mustExist bool) ([]byte, error) 
 
 func valuesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
 	if db == nil {
-		return fmt.Errorf("db is nil")
+		c := withCallerInfo(fmt.Sprintf("value iteration at %s", path), 3)
+		return fmt.Errorf("%s received nil db", c)
 	}
 
 	var values [][]byte
@@ -152,7 +163,7 @@ func valuesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, d
 			case buffer <- k:
 				timer.Stop()
 			case <-timer.C:
-				err := newErrTimeout("quickbolt value retrieval", "waiting to send to buffer")
+				err := newErrTimeout("value iteration", "waiting to send to buffer")
 				logMutex.Lock()
 				dbWrap.logger.Err(err).Msg("")
 				logMutex.Unlock()
@@ -165,13 +176,22 @@ func valuesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, d
 	})
 
 	if err != nil {
-		return fmt.Errorf("error while scanning db: %w", err)
+		c := withCallerInfo(fmt.Sprintf("value iteration at %s", path), 3)
+		return fmt.Errorf("%s experienced error while scanning db: %w", c, err)
 	}
 
 	return nil
 }
 
 func keysAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
+	if db == nil {
+		c := withCallerInfo(fmt.Sprintf("key iteration at %s", path), 3)
+		return fmt.Errorf("%s received nil db", c)
+	} else if buffer == nil {
+		c := withCallerInfo(fmt.Sprintf("key iteration at %s", path), 3)
+		return fmt.Errorf("%s received nil channel", c)
+	}
+
 	defer close(buffer)
 
 	err := db.View(func(tx *bbolt.Tx) error {
@@ -205,12 +225,21 @@ func keysAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, dbW
 	})
 
 	if err != nil {
-		return fmt.Errorf("error while scanning keys at %#v: %w", path, err)
+		c := withCallerInfo(fmt.Sprintf("key iteration at %s", path), 3)
+		return fmt.Errorf("%s experienced error while scanning keys: %w", c, err)
 	}
 	return nil
 }
 
 func entriesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan [2][]byte, dbWrap dbWrapper) error {
+	if db == nil {
+		c := withCallerInfo(fmt.Sprintf("key-value iteration at %s", path), 3)
+		return fmt.Errorf("%s received nil db", c)
+	} else if buffer == nil {
+		c := withCallerInfo(fmt.Sprintf("key-value iteration at %s", path), 3)
+		return fmt.Errorf("%s received nil channel", c)
+	}
+
 	defer close(buffer)
 
 	err := db.View(func(tx *bbolt.Tx) error {
@@ -244,12 +273,21 @@ func entriesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan [2][]byt
 	})
 
 	if err != nil {
-		return fmt.Errorf("error while scanning keys at %#v: %w", path, err)
+		c := withCallerInfo(fmt.Sprintf("key-value iteration at %s", path), 3)
+		return fmt.Errorf("%s experienced error while scanning keys: %w", c, err)
 	}
 	return nil
 }
 
 func bucketsAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, dbWrap dbWrapper) error {
+	if db == nil {
+		c := withCallerInfo(fmt.Sprintf("bucket iteration at %s", path), 3)
+		return fmt.Errorf("%s received nil db", c)
+	} else if buffer == nil {
+		c := withCallerInfo(fmt.Sprintf("bucket iteration at %s", path), 3)
+		return fmt.Errorf("%s received nil channel", c)
+	}
+
 	defer close(buffer)
 
 	err := db.View(func(tx *bbolt.Tx) error {
@@ -283,7 +321,8 @@ func bucketsAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, 
 	})
 
 	if err != nil {
-		return fmt.Errorf("error while scanning buckets at %#v: %w", path, err)
+		c := withCallerInfo(fmt.Sprintf("bucket iteration at %s", path), 3)
+		return fmt.Errorf("%s experienced error while scanning buckets: %w", c, err)
 	}
 	return nil
 }
