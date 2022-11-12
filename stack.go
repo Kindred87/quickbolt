@@ -5,7 +5,7 @@ import (
 	"runtime"
 )
 
-// getCallerInfo returns a string describing the file and line number of the caller for code calling this function.
+// withCallerInfo returns a string describing the file and line number of the caller for code calling this function.
 // The string is formatted as:
 //   - "<task> called at line <line number> in <file>"
 //
@@ -14,7 +14,7 @@ import (
 //
 // If error occurs, the returned string will be formatted as:
 //   - "<task>"
-func getCallerInfo(task string) string {
+func withCallerInfo(task string) string {
 	_, file, line, ok := runtime.Caller(2)
 
 	if !ok {

@@ -23,10 +23,10 @@ import (
 // If a timeout is not given, quickbolt's default timeout will be used instead. See quickbolt/common.go
 func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ctx context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
 	if buffer == nil {
-		c := getCallerInfo("channel byte capture")
+		c := withCallerInfo("channel byte capture")
 		return fmt.Errorf("%s received nil input channel", c)
 	} else if intoSlice == nil {
-		c := getCallerInfo("channel byte capture")
+		c := withCallerInfo("channel byte capture")
 		return fmt.Errorf("%s received nil capture slice", c)
 	}
 
@@ -64,21 +64,21 @@ func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ct
 			case *[]int:
 				i, err := strconv.Atoi(string(v))
 				if err != nil {
-					c := getCallerInfo("channel byte capture")
+					c := withCallerInfo("channel byte capture")
 					return fmt.Errorf("%s experienced error while converting %s to an integer: %w", c, string(v), err)
 				}
 				*sl = append(*sl, i)
 			case *[]float32:
 				f, err := strconv.ParseFloat(string(v), 32)
 				if err != nil {
-					c := getCallerInfo("channel byte capture")
+					c := withCallerInfo("channel byte capture")
 					return fmt.Errorf("%s experienced error while parsing %s as a 32 bit float: %w", c, string(v), err)
 				}
 				*sl = append(*sl, float32(f))
 			case *[]float64:
 				f, err := strconv.ParseFloat(string(v), 32)
 				if err != nil {
-					c := getCallerInfo("channel byte capture")
+					c := withCallerInfo("channel byte capture")
 					return fmt.Errorf("%s experienced error while parsing %s as a 32 bit float: %w", c, string(v), err)
 				}
 				*sl = append(*sl, f)
@@ -90,7 +90,7 @@ func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ct
 				mut.Unlock()
 			}
 		case <-timer.C:
-			c := getCallerInfo("channel byte capture")
+			c := withCallerInfo("channel byte capture")
 			err := newErrTimeout(c, "waiting to receive from input channel")
 			if timeoutLog != nil {
 				logMutex.Lock()
@@ -112,7 +112,7 @@ func CaptureBytes(intoSlice interface{}, buffer chan []byte, mut *sync.Mutex, ct
 // If a timeout is not given, quickbolt's default timeout will be used instead. See quickbolt/common.go
 func Capture[T any](into *[]T, buffer chan T, mut *sync.Mutex, ctx context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
 	if buffer == nil {
-		c := getCallerInfo("channel value capture")
+		c := withCallerInfo("channel value capture")
 		return fmt.Errorf("%s received nil input channel", c)
 	}
 
@@ -147,7 +147,7 @@ func Capture[T any](into *[]T, buffer chan T, mut *sync.Mutex, ctx context.Conte
 				mut.Unlock()
 			}
 		case <-timer.C:
-			c := getCallerInfo("channel value capture")
+			c := withCallerInfo("channel value capture")
 			err := newErrTimeout(c, "waiting to receive from input channel")
 			if timeoutLog != nil {
 				logMutex.Lock()
@@ -171,13 +171,13 @@ func Filter[T any](in chan T, out chan T, allow func(T) bool, ctx context.Contex
 	}
 
 	if in == nil {
-		c := getCallerInfo("channel filtration")
+		c := withCallerInfo("channel filtration")
 		return fmt.Errorf("%s received nil input channel", c)
 	} else if out == nil {
-		c := getCallerInfo("channel filtration")
+		c := withCallerInfo("channel filtration")
 		return fmt.Errorf("%s received nil output channel", c)
 	} else if allow == nil {
-		c := getCallerInfo("channel filtration")
+		c := withCallerInfo("channel filtration")
 		return fmt.Errorf("%s received nil allow function", c)
 	}
 
@@ -208,7 +208,7 @@ func Filter[T any](in chan T, out chan T, allow func(T) bool, ctx context.Contex
 				case out <- v:
 					timer.Stop()
 				case <-timer.C:
-					c := getCallerInfo("channel filtration")
+					c := withCallerInfo("channel filtration")
 					err := newErrTimeout(c, "waiting to send to output channel")
 					if timeoutLog != nil {
 						logMutex.Lock()
@@ -219,7 +219,7 @@ func Filter[T any](in chan T, out chan T, allow func(T) bool, ctx context.Contex
 				}
 			}
 		case <-timer.C:
-			c := getCallerInfo("channel filtration")
+			c := withCallerInfo("channel filtration")
 			err := newErrTimeout(c, "waiting to receive from input channel")
 			if timeoutLog != nil {
 				logMutex.Lock()
@@ -244,13 +244,13 @@ func Convert[A any, B any](in chan A, convert func(A) (B, error), out chan B, ct
 	}
 
 	if in == nil {
-		c := getCallerInfo("channel conversion")
+		c := withCallerInfo("channel conversion")
 		return fmt.Errorf("%s received nil input channel", c)
 	} else if out == nil {
-		c := getCallerInfo("channel conversion")
+		c := withCallerInfo("channel conversion")
 		return fmt.Errorf("%s received nil output channel", c)
 	} else if convert == nil {
-		c := getCallerInfo("channel conversion")
+		c := withCallerInfo("channel conversion")
 		return fmt.Errorf("%s received nil conversion function", c)
 	}
 
@@ -277,17 +277,17 @@ func Convert[A any, B any](in chan A, convert func(A) (B, error), out chan B, ct
 
 			new, err := convert(v)
 			if err != nil {
-				c := getCallerInfo("channel conversion")
+				c := withCallerInfo("channel conversion")
 				return fmt.Errorf("%s experienced error while converting value %v: %w", c, v, err)
 			}
 
 			err = Send(out, new, ctx, timeoutLog, timeout...)
 			if err != nil {
-				c := getCallerInfo("channel conversion")
+				c := withCallerInfo("channel conversion")
 				return fmt.Errorf("%s experienced error while sending %v to output channel: %w", c, new, err)
 			}
 		case <-timer.C:
-			c := getCallerInfo("channel conversion")
+			c := withCallerInfo("channel conversion")
 			err := newErrTimeout(c, "waiting to receive from input channel")
 			if timeoutLog != nil {
 				logMutex.Lock()
@@ -320,13 +320,13 @@ func DoEach[T any](in chan T, db DB, do func(T, chan T, DB) error, out chan T, w
 	}
 
 	if in == nil {
-		c := getCallerInfo("channel do each")
+		c := withCallerInfo("channel do each")
 		return fmt.Errorf("%s received nil input channel", c)
 	} else if do == nil {
-		c := getCallerInfo("channel do each")
+		c := withCallerInfo("channel do each")
 		return fmt.Errorf("received nil do func", c)
 	} else if out == nil {
-		c := getCallerInfo("channel do each")
+		c := withCallerInfo("channel do each")
 		return fmt.Errorf("%s received nil output channel", c)
 	}
 
@@ -355,7 +355,7 @@ func DoEach[T any](in chan T, db DB, do func(T, chan T, DB) error, out chan T, w
 				timer := time.NewTimer(timeout[0])
 				select {
 				case <-timer.C:
-					c := getCallerInfo("channel do each")
+					c := withCallerInfo("channel do each")
 					err := newErrTimeout(c, fmt.Sprintf("waiting to create new goroutine using %v", v))
 					if timeoutLog != nil {
 						logMutex.Lock()
@@ -371,7 +371,7 @@ func DoEach[T any](in chan T, db DB, do func(T, chan T, DB) error, out chan T, w
 			}
 
 		case <-timer.C:
-			c := getCallerInfo("channel do each")
+			c := withCallerInfo("channel do each")
 			err := newErrTimeout(c, "waiting to receive from input channel")
 			if timeoutLog != nil {
 				logMutex.Lock()
@@ -392,7 +392,7 @@ func DoEach[T any](in chan T, db DB, do func(T, chan T, DB) error, out chan T, w
 // See quickbolt/common.go
 func Send[T any](buffer chan T, value T, ctx context.Context, timeoutLog io.Writer, timeout ...time.Duration) error {
 	if buffer == nil {
-		c := getCallerInfo("channel send")
+		c := withCallerInfo("channel send")
 		return fmt.Errorf("%s received nil channel", c)
 	}
 
@@ -413,7 +413,7 @@ func Send[T any](buffer chan T, value T, ctx context.Context, timeoutLog io.Writ
 		timer.Stop()
 		return nil
 	case <-timer.C:
-		c := getCallerInfo(fmt.Sprintf("channel send for value %v", value))
+		c := withCallerInfo(fmt.Sprintf("channel send for value %v", value))
 		err := newErrTimeout(c, "waiting to send to channel")
 		if timeoutLog != nil {
 			logMutex.Lock()
