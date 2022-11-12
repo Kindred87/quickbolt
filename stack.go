@@ -9,6 +9,9 @@ import (
 // The string is formatted as:
 //   - "<task> called at line <line number> in <file>"
 //
+// If task is empty, the returned string will be formatted as:
+//   - "<file> on line <line number>"
+//
 // If error occurs, the returned string will be formatted as:
 //   - "<task>"
 func getCallerInfo(task string) string {
@@ -18,7 +21,7 @@ func getCallerInfo(task string) string {
 		return task
 	}
 
-	if len(task) > 0 {
+	if task != "" {
 		return fmt.Sprintf("%s called at line %d in %s", task, line, file)
 	}
 
