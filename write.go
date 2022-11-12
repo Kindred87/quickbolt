@@ -87,26 +87,30 @@ func insertValue(db *bbolt.DB, value []byte, path [][]byte) error {
 	err := db.Batch(func(tx *bbolt.Tx) error {
 		bkt, err := getCreateBucket(tx, path)
 		if err != nil {
-			return fmt.Errorf("error while navigating path: %w", err)
+			c := withCallerInfo(fmt.Sprintf("value insertion for %v", value), 3)
+			return fmt.Errorf("%s experienced error while navigating path: %w", c, err)
 		}
 
 		k, _ := bkt.NextSequence()
 
 		key, err := PerEndian(k)
 		if err != nil {
-			return fmt.Errorf("error while converting key to bytes: %w", err)
+			c := withCallerInfo(fmt.Sprintf("value insertion for %v", value), 3)
+			return fmt.Errorf("%s experienced error while converting key to bytes: %w", c, err)
 		}
 
 		err = bkt.Put(key, value)
 		if err != nil {
-			return fmt.Errorf("error while writing: %w", err)
+			c := withCallerInfo(fmt.Sprintf("value insertion for %v", value), 3)
+			return fmt.Errorf("%s experienced error while writing: %w", c, err)
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		return fmt.Errorf("error while writing %s to db: %w", string(value), err)
+		c := withCallerInfo(fmt.Sprintf("value insertion for %v", value), 3)
+		return fmt.Errorf("%s experienced error while writing %s to db: %w", c, string(value), err)
 	}
 
 	return nil
