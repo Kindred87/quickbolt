@@ -5,8 +5,12 @@ import (
 	"runtime"
 )
 
-// withCallerInfo returns a string describing the file and line number of the caller for code calling this function.
-// The string is formatted as:
+// withCallerInfo returns a string describing the file and line number of the caller at the given offset.
+//
+// An offset value of 2 will return the caller of the function calling this function.
+// An offset value of 3 will return the caller of the caller of the function calling this function.
+//
+// The returned string is formatted as:
 //   - "<task> called at line <line number> in <file>"
 //
 // If task is empty, the returned string will be formatted as:
@@ -14,8 +18,8 @@ import (
 //
 // If error occurs, the returned string will be formatted as:
 //   - "<task>"
-func withCallerInfo(task string) string {
-	_, file, line, ok := runtime.Caller(2)
+func withCallerInfo(task string, offset int) string {
+	_, file, line, ok := runtime.Caller(offset)
 
 	if !ok {
 		return task
