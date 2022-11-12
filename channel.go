@@ -163,9 +163,11 @@ func Filter[T any](in chan T, out chan T, allow func(T) bool, ctx context.Contex
 	defer close(out)
 
 	if in == nil {
-		return fmt.Errorf("input channel is empty")
+		return fmt.Errorf("input channel is nil")
 	} else if out == nil {
-		return fmt.Errorf("output channel is empty")
+		return fmt.Errorf("output channel is nil")
+	} else if allow == nil {
+		return fmt.Errorf("allow function is nil")
 	}
 
 	if timeout == nil {
@@ -189,7 +191,7 @@ func Filter[T any](in chan T, out chan T, allow func(T) bool, ctx context.Contex
 				return nil
 			}
 
-			if allow == nil || allow(v) {
+			if allow(v) {
 				timer := time.NewTimer(timeout[0])
 				select {
 				case out <- v:
