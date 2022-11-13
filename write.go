@@ -94,12 +94,6 @@ func insertValue(db *bbolt.DB, value []byte, path [][]byte) error {
 
 		k, _ := bkt.NextSequence()
 
-		_, err = PerEndian(k)
-		if err != nil {
-			c := withCallerInfo(fmt.Sprintf("value insertion for %v", value), 3)
-			return fmt.Errorf("%s experienced error while converting key to bytes: %w", c, err)
-		}
-
 		err = bkt.Put([]byte(strconv.FormatUint(k, 10)), value)
 		if err != nil {
 			c := withCallerInfo(fmt.Sprintf("value insertion for %v", value), 3)
