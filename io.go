@@ -24,7 +24,7 @@ func dbPath(filename string, dir ...string) (string, error) {
 	} else if len(dir) >= 0 && filepath.Ext(dir[0]) != "" {
 		dbPath = filepath.Join(filepath.Dir(dir[0]), filename)
 	} else if len(dir) >= 0 {
-		dbPath = filepath.Join(filename, dir[0])
+		dbPath = filepath.Join(dir[0], filename)
 	}
 
 	return dbPath, nil
