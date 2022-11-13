@@ -9,6 +9,9 @@ import (
 )
 
 func dbPath(filename string, dir ...string) (string, error) {
+	if filename == "" {
+		return "", fmt.Errorf("filename is empty")
+	}
 	var dbPath string
 
 	if dir == nil {
@@ -19,9 +22,9 @@ func dbPath(filename string, dir ...string) (string, error) {
 
 		dbPath = filepath.Join(exec, filename)
 	} else if len(dir) >= 0 && filepath.Ext(dir[0]) != "" {
-		dbPath = filepath.Dir(dir[0])
+		dbPath = filepath.Join(filepath.Dir(dir[0]), filename)
 	} else if len(dir) >= 0 {
-		dbPath = dir[0]
+		dbPath = filepath.Join(filename, dir[0])
 	}
 
 	return dbPath, nil
