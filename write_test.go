@@ -14,7 +14,7 @@ func Test_insertValue(t *testing.T) {
 	defer os.Remove(db.Path())
 	defer db.Close()
 
-	uintOne, err := PerEndian(uint64(1))
+	_, err = PerEndian(uint64(1))
 	assert.Nil(t, err)
 
 	type args struct {
@@ -33,7 +33,7 @@ func Test_insertValue(t *testing.T) {
 		wantErr bool
 		check   check
 	}{
-		{name: "Basic", args: args{db: db, value: []byte("test-value"), path: [][]byte{}}, wantErr: false, check: check{key: uintOne, value: []byte("test-value"), path: [][]byte{}}},
+		{name: "Basic", args: args{db: db, value: []byte("test-value"), path: [][]byte{}}, wantErr: false, check: check{key: []byte("1"), value: []byte("test-value"), path: [][]byte{}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
