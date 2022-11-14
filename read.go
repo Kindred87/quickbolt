@@ -103,7 +103,6 @@ func getKeys(db *bbolt.DB, value []byte, path [][]byte, mustExist bool) ([][]byt
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			if bytes.Equal(v, value) {
 				keys = append(keys, k)
-				return nil
 			}
 		}
 
