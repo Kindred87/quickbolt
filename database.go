@@ -57,7 +57,7 @@ type DB interface {
 	//
 	// BucketPath must be of type []string or [][]byte.
 	DeleteValues(value, bucketPath any) error
-	// getValue returns the value paired with the given key.
+	// GetValue returns the value paired with the given key.
 	// The returned value will be nil if the key could not be found.
 	//
 	// Key must be of type []byte, string, int, or uint64.
@@ -66,8 +66,8 @@ type DB interface {
 	//
 	// If mustExist is true, an error will be returned if the key could not be found.
 	GetValue(key, bucketPath any, mustExist bool) ([]byte, error)
-	// getKey returns the key paired with the given value.
-	// The returned value will be nil if the value could not be found.
+	// GetKey returns the key paired with the given value.
+	// The returned key will be nil if the value could not be found.
 	//
 	// Value must be of type []byte, string, int, or uint64.
 	//
@@ -75,7 +75,16 @@ type DB interface {
 	//
 	// If mustExist is true, an error will be returned if the value could not be found.
 	GetKey(value, bucketPath any, mustExist bool) ([]byte, error)
-	// getFirstKeyAt returns the first key at the given path.
+	// GetKeys returns a slice of keys paired with the given value.
+	// The returned slice will be nil if the value could not be found.
+	//
+	// Value must be of type []byte, string, int, or uint64.
+	//
+	// BucketPath must be of type []string or [][]byte.
+	//
+	// If mustExist is true, an error will be returned if the value could not be found.
+	GetKeys(value, bucketPath any, mustExist bool) ([][]byte, error)
+	// GetFirstKeyAt returns the first key at the given path.
 	//
 	// BucketPath must be of type []string or [][]byte.
 	//
@@ -333,6 +342,22 @@ func (d dbWrapper) GetKey(val, path any, mustExist bool) ([]byte, error) {
 	}
 
 	return getKey(d.db, v, p, mustExist)
+}
+
+func (d dbWrapper) GetKeys(val, path any, mustExist bool) ([][]byte, error) {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		c := withCallerInfo("key retrieval", 2)
+		return nil, fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
+	}
+
+	v, err := resolveRecord(val)
+	if err != nil {
+		c := withCallerInfo("key retrieval", 2)
+		return nil, fmt.Errorf("%s %w", c, newErrRecordResolution("value", val))
+	}
+
+	return getKeys(d.db, v, p, mustExist)
 }
 
 func (d dbWrapper) GetFirstKeyAt(path any, mustExist bool) ([]byte, error) {

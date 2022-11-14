@@ -82,6 +82,45 @@ func getKey(db *bbolt.DB, value []byte, path [][]byte, mustExist bool) ([]byte, 
 	return key, nil
 }
 
+func getKeys(db *bbolt.DB, value []byte, path [][]byte, mustExist bool) ([][]byte, error) {
+	if db == nil {
+		c := withCallerInfo(fmt.Sprintf("multiple key retrieval for %s", value), 3)
+		return nil, fmt.Errorf("%s received nil db", c)
+	}
+
+	var keys [][]byte
+
+	err := db.View(func(tx *bbolt.Tx) error {
+		bkt, err := getBucket(tx, path, mustExist)
+		if err != nil {
+			return fmt.Errorf("error while navigating path: %w", err)
+		} else if bkt == nil {
+			return nil
+		}
+
+		c := bkt.Cursor()
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			if bytes.Equal(v, value) {
+				keys = append(keys, k)
+				return nil
+			}
+		}
+
+		if len(keys) == 0 && mustExist {
+			return newErrLocate(fmt.Sprintf("value %s at %#v", string(value), path))
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		c := withCallerInfo(fmt.Sprintf("multiple key retrieval for %s", value), 3)
+		return nil, fmt.Errorf("%s experienced error while getting value: %w", c, err)
+	}
+	return keys, nil
+}
+
 func getBucket(tx *bbolt.Tx, path [][]byte, mustExist bool) (*bbolt.Bucket, error) {
 	bkt := tx.Bucket([]byte(rootBucket))
 	if bkt == nil && mustExist {
