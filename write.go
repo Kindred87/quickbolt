@@ -152,6 +152,23 @@ func delete(db *bbolt.DB, key []byte, path [][]byte) error {
 	return nil
 }
 
+func deleteBucket(db *bbolt.DB, bucket []byte, path [][]byte) error {
+	err := db.Batch(func(tx *bbolt.Tx) error {
+		bkt, err := getCreateBucket(tx, path)
+		if err != nil {
+			return fmt.Errorf("error while navigating path: %w", err)
+		}
+
+		return bkt.DeleteBucket(bucket)
+	})
+
+	if err != nil {
+		return fmt.Errorf("error while deleting %s from db: %w", string(bucket), err)
+	}
+
+	return nil
+}
+
 // deleteValues removes all key-value pairs in the db at the given path where the value matches the one given.
 func deleteValues(db *bbolt.DB, value []byte, path [][]byte) error {
 	if db == nil {

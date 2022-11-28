@@ -51,6 +51,12 @@ type DB interface {
 	//
 	// BucketPath must be of type []string or [][]byte.
 	Delete(key, bucketPath any) error
+	// DeleteBucket removes the bucket in the db at the given path.
+	//
+	// Key must be of type []byte, string, int, or uint64.
+	//
+	// BucketPath must be of type []string or [][]byte.
+	DeleteBucket(key, bucketPath any) error
 	// DeleteValues removes all key-value pairs in the db at the given path where the value matches the one given.
 	//
 	// Value must be of type []byte, string, int, or uint64.
@@ -294,6 +300,22 @@ func (d dbWrapper) Delete(key, path any) error {
 	}
 
 	return delete(d.db, k, p)
+}
+
+func (d dbWrapper) DeleteBucket(bucket, path any) error {
+	p, err := resolveBucketPath(path)
+	if err != nil {
+		c := withCallerInfo("bucket deletion", 2)
+		return fmt.Errorf("%s experienced %w", c, newErrBucketPathResolution("error"))
+	}
+
+	b, err := resolveRecord(bucket)
+	if err != nil {
+		c := withCallerInfo("bucket deletion", 2)
+		return fmt.Errorf("%s %w", c, newErrRecordResolution("bucket", bucket))
+	}
+
+	return deleteBucket(d.db, b, p)
 }
 
 func (d dbWrapper) DeleteValues(val, path any) error {
