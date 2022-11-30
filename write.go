@@ -53,7 +53,7 @@ func getCreateBucket(tx *bbolt.Tx, path [][]byte) (*bbolt.Bucket, error) {
 	for _, p := range path {
 		bkt, err = bkt.CreateBucketIfNotExists(p)
 		if err != nil {
-			return nil, fmt.Errorf("error while accessing %s in %#v: %w", p, path, err)
+			return nil, fmt.Errorf("error while accessing %s in %s: %w", p, path, err)
 		}
 	}
 
