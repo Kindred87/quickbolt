@@ -186,8 +186,6 @@ func valuesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, d
 		return fmt.Errorf("%s received nil channel", c)
 	}
 
-	var values [][]byte
-
 	err := db.View(func(tx *bbolt.Tx) error {
 		bkt, err := getBucket(tx, path, mustExist)
 		if err != nil {
@@ -210,7 +208,6 @@ func valuesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, d
 				logMutex.Unlock()
 				return err
 			}
-			values = append(values, v)
 		}
 
 		return nil
