@@ -201,7 +201,7 @@ func valuesAt(db *bbolt.DB, path [][]byte, mustExist bool, buffer chan []byte, d
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			timer := time.NewTimer(dbWrap.bufferTimeout)
 			select {
-			case buffer <- k:
+			case buffer <- v:
 				timer.Stop()
 			case <-timer.C:
 				err := newErrTimeout("value iteration", "waiting to send to buffer")
