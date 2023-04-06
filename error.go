@@ -1,6 +1,9 @@
 package quickbolt
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 const (
 	errLocateMsg               = "could not locate"
@@ -32,6 +35,10 @@ type ErrAccess struct {
 
 func (e ErrAccess) Error() string {
 	return fmt.Sprintf("%s %s", errAccessMsg, e.What)
+}
+
+func (e ErrAccess) Is(target error) bool {
+	return strings.HasPrefix(target.Error(), errAccessMsg)
 }
 
 // "could not access" what
