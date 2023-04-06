@@ -30,7 +30,7 @@ func getValue(db *bbolt.DB, key []byte, path [][]byte, mustExist bool) ([]byte, 
 
 		value = bkt.Get(key)
 		if value == nil && mustExist {
-			return newErrLocate(fmt.Sprintf("key %s at %#v", string(key), path))
+			return newErrLocate(fmt.Sprintf("key %s at %s", string(key), path))
 		}
 
 		return nil
