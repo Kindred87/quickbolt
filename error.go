@@ -23,6 +23,10 @@ func (e ErrLocate) Error() string {
 	return fmt.Sprintf("%s %s", errLocateMsg, e.What)
 }
 
+func (e ErrLocate) Is(target error) bool {
+	return strings.HasPrefix(target.Error(), errLocateMsg)
+}
+
 // "could not locate" what
 func newErrLocate(what string) error {
 	return ErrLocate{What: what}
